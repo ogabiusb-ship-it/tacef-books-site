@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#11154a" />
+    <meta name="theme-color" content="#070b35" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" type="image/png" href="./tacef-favicon.png" />
@@ -14,7 +14,7 @@
   <body class="reader-body">
     <header class="reader-header">
       <a class="reader-back" href="./index.html#library" aria-label="Back to library">← <span>Library</span></a>
-      <div class="reader-title"><img src="./tacef-favicon.png" alt="" /><div><strong id="readerBookTitle">TACEF Books</strong><small id="readerBookMeta">Loading manual…</small></div></div>
+      <div class="reader-title"><img src="./tacef-banner-logo.png" alt="TACEF" /><div><strong id="readerBookTitle">TACEF Books</strong><small id="readerBookMeta">Loading manual…</small></div></div>
       <div class="reader-actions">
         <span class="network-pill" id="networkStatus" role="status"><i></i><span>Online</span></span>
         <button class="icon-button" id="readerSearchButton" type="button" aria-label="Search this manual" title="Search this manual">⌕</button>
@@ -32,8 +32,18 @@
         <a class="rail-action" id="originalPdfLink" href="#" target="_blank" rel="noopener">Open PDF</a>
       </aside>
       <section class="pdf-stage" aria-label="Manual pages">
-        <div class="reader-loading" id="readerLoading"><span></span><p>Preparing the manual…</p></div>
-        <iframe id="pdfFrame" title="TACEF manual reader"></iframe>
+        <div class="reader-loading" id="readerLoading">
+          <img src="./tacef-banner-logo.png" alt="" />
+          <span></span><p id="readerLoadingText">Preparing the manual…</p>
+        </div>
+        <div class="pdf-canvas-wrap" id="pdfCanvasWrap">
+          <canvas id="pdfCanvas" aria-label="Current manual page"></canvas>
+        </div>
+        <div class="reader-error hidden" id="readerError" role="alert">
+          <strong>We could not display this page.</strong>
+          <p id="readerErrorMessage">Check your connection and try again.</p>
+          <div><button class="button button-primary" id="retryReader" type="button">Try again</button><a class="button button-secondary" id="errorPdfLink" href="#" target="_blank" rel="noopener">Open PDF</a></div>
+        </div>
       </section>
     </main>
 
@@ -44,7 +54,7 @@
     </nav>
 
     <dialog class="app-dialog reader-dialog" id="searchDialog">
-      <button class="dialog-close" data-close-dialog aria-label="Close">×</button>
+      <button class="dialog-close" data-close-dialog type="button" aria-label="Close">×</button>
       <span class="eyebrow">Search this manual</span><h2 id="searchDialogTitle">Find a topic</h2>
       <form class="search-box compact-search" id="readerSearchForm" role="search"><input id="readerSearchInput" type="search" minlength="2" placeholder="Enter a word or phrase" /><button type="submit">Search</button></form>
       <div class="search-status" id="readerSearchStatus">Enter at least two characters.</div>
@@ -52,12 +62,12 @@
     </dialog>
 
     <dialog class="app-dialog reader-dialog" id="bookmarksDialog">
-      <button class="dialog-close" data-close-dialog aria-label="Close">×</button>
+      <button class="dialog-close" data-close-dialog type="button" aria-label="Close">×</button>
       <span class="eyebrow">Saved places</span><h2>Bookmarks</h2><div class="bookmark-list" id="bookmarkList"></div>
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script src="./catalog.js"></script>
-    <script src="./reader.js"></script>
+    <script type="module" src="./reader.js"></script>
   </body>
 </html>
