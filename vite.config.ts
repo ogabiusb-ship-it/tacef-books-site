@@ -34,6 +34,7 @@ const localBindingConfig = {
 };
 
 export default defineConfig(async () => {
+  const isGitHubPages = process.env.GITHUB_PAGES === "true";
   // Keep Wrangler and Miniflare state project-local. These are non-secret tool
   // settings; application environment belongs in ignored `.env*` files.
   process.env.WRANGLER_WRITE_LOGS ??= "false";
@@ -44,6 +45,7 @@ export default defineConfig(async () => {
   const { cloudflare } = await import("@cloudflare/vite-plugin");
 
   return {
+    base: isGitHubPages ? "/tacef-books-site/" : "/",
     server: {
       host: "0.0.0.0",
       allowedHosts: ["terminal.local"],
