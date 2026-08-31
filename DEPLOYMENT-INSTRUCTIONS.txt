@@ -1,0 +1,41 @@
+TACEF BOOKS — INSTALLABLE OFFLINE WEB APP
+==========================================
+
+WHAT THIS PACKAGE CONTAINS
+--------------------------
+This is the complete ready-to-host TACEF Books website. It contains the
+English Manual, Yoruba Manual, Seed of Purpose Manual, offline installation,
+search, bookmarks and reading-progress features.
+
+PUBLISH ON GITHUB PAGES
+-----------------------
+1. Extract this ZIP on your computer.
+2. Open the existing TACEF Books GitHub repository.
+3. Upload every file and folder from the extracted package into the root of
+   the repository. Do not upload the ZIP itself.
+4. Because the Seed of Purpose PDF is larger than GitHub's normal browser
+   upload limit, use GitHub Desktop to commit and push the extracted files.
+5. In GitHub, open Settings > Pages.
+6. Under Build and deployment, choose Deploy from a branch.
+7. Select the main branch and /(root), then Save.
+8. Wait a few minutes and open the Pages address supplied by GitHub.
+
+INSTALL ON A DEVICE
+-------------------
+Android or desktop Chrome/Edge:
+- Open the published site and select Install app.
+
+iPhone or iPad:
+- Open the site in Safari.
+- Tap Share, then Add to Home Screen.
+
+USE WITHOUT INTERNET
+--------------------
+Open the installed app while online and choose Save offline on each manual
+you want to retain. The app, search index, bookmarks and selected manuals will
+then remain available on that device without internet access.
+
+IMPORTANT
+---------
+Offline downloads are stored separately on each device. Clearing the browser's
+site data removes saved manuals, bookmarks and reading progress from that device.

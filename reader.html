@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#11154a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/png" href="./tacef-favicon.png" />
+    <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>Reader · TACEF Books</title>
+  </head>
+  <body class="reader-body">
+    <header class="reader-header">
+      <a class="reader-back" href="./index.html#library" aria-label="Back to library">← <span>Library</span></a>
+      <div class="reader-title"><img src="./tacef-favicon.png" alt="" /><div><strong id="readerBookTitle">TACEF Books</strong><small id="readerBookMeta">Loading manual…</small></div></div>
+      <div class="reader-actions">
+        <span class="network-pill" id="networkStatus" role="status"><i></i><span>Online</span></span>
+        <button class="icon-button" id="readerSearchButton" type="button" aria-label="Search this manual" title="Search this manual">⌕</button>
+        <button class="icon-button" id="bookmarkButton" type="button" aria-label="Bookmark this page" title="Bookmark this page">☆</button>
+        <button class="button button-gold compact" id="offlineButton" type="button">Save offline</button>
+      </div>
+    </header>
+
+    <main class="reader-shell">
+      <aside class="reader-rail" aria-label="Reading controls">
+        <button class="page-step" id="prevPage" type="button" aria-label="Previous page">←</button>
+        <label class="page-control"><span>Page</span><input id="pageInput" type="number" min="1" inputmode="numeric" /><small id="pageTotal">of —</small></label>
+        <button class="page-step" id="nextPage" type="button" aria-label="Next page">→</button>
+        <button class="rail-action" id="bookmarksButton" type="button">Bookmarks</button>
+        <a class="rail-action" id="originalPdfLink" href="#" target="_blank" rel="noopener">Open PDF</a>
+      </aside>
+      <section class="pdf-stage" aria-label="Manual pages">
+        <div class="reader-loading" id="readerLoading"><span></span><p>Preparing the manual…</p></div>
+        <iframe id="pdfFrame" title="TACEF manual reader"></iframe>
+      </section>
+    </main>
+
+    <nav class="mobile-page-bar" aria-label="Page navigation">
+      <button id="mobilePrevPage" type="button">← Previous</button>
+      <button id="mobilePageButton" type="button">Page <span id="mobilePageNumber">1</span></button>
+      <button id="mobileNextPage" type="button">Next →</button>
+    </nav>
+
+    <dialog class="app-dialog reader-dialog" id="searchDialog">
+      <button class="dialog-close" data-close-dialog aria-label="Close">×</button>
+      <span class="eyebrow">Search this manual</span><h2 id="searchDialogTitle">Find a topic</h2>
+      <form class="search-box compact-search" id="readerSearchForm" role="search"><input id="readerSearchInput" type="search" minlength="2" placeholder="Enter a word or phrase" /><button type="submit">Search</button></form>
+      <div class="search-status" id="readerSearchStatus">Enter at least two characters.</div>
+      <div class="search-results dialog-results" id="readerSearchResults"></div>
+    </dialog>
+
+    <dialog class="app-dialog reader-dialog" id="bookmarksDialog">
+      <button class="dialog-close" data-close-dialog aria-label="Close">×</button>
+      <span class="eyebrow">Saved places</span><h2>Bookmarks</h2><div class="bookmark-list" id="bookmarkList"></div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./catalog.js"></script>
+    <script src="./reader.js"></script>
+  </body>
+</html>

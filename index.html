@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#11154a" />
+    <meta name="description" content="Read, search and save the official TACEF 2026 manuals for offline use." />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TACEF Books" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" type="image/png" href="./tacef-favicon.png" />
+    <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+    <link rel="stylesheet" href="./styles.css" />
+    <title>TACEF Books</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#library">Skip to manuals</a>
+
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="TACEF Books home">
+        <img src="./tacef-favicon.png" alt="The African Church emblem" />
+        <span><strong>TACEF Books</strong><small>Digital manuals</small></span>
+      </a>
+      <nav class="header-actions" aria-label="Primary navigation">
+        <a href="#library">Library</a>
+        <a href="#search">Search</a>
+        <span class="network-pill" id="networkStatus" role="status"><i></i><span>Online</span></span>
+        <button class="button button-gold compact" id="installButton" type="button">Install app</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero shell" aria-labelledby="heroTitle">
+        <div class="hero-copy">
+          <span class="eyebrow">TACEF 2026 / 2027</span>
+          <h1 id="heroTitle">The manuals you need,<br /><em>wherever you are.</em></h1>
+          <p>Read in English or Yoruba, search the publications and save complete manuals for use without internet.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#library">Open the library</a>
+            <button class="button button-secondary" id="heroInstallButton" type="button">Install TACEF Books</button>
+          </div>
+          <div class="trust-row" aria-label="App features">
+            <span>✓ Works offline</span><span>✓ No sign-in</span><span>✓ Reading progress saved</span>
+          </div>
+        </div>
+        <div class="hero-mark" aria-hidden="true">
+          <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+          <div class="mark-core"><img src="./tacef-favicon.png" alt="" /></div>
+          <span class="mark-label label-one">EN</span><span class="mark-label label-two">YO</span><span class="mark-label label-three">SOP</span>
+        </div>
+      </section>
+
+      <section class="continue-panel shell hidden" id="continuePanel" aria-labelledby="continueTitle">
+        <div><span class="eyebrow">Continue reading</span><h2 id="continueTitle"></h2><p id="continueMeta"></p></div>
+        <a class="button button-primary" id="continueLink" href="./reader.html">Resume</a>
+      </section>
+
+      <section class="library-section shell" id="library" aria-labelledby="libraryTitle">
+        <div class="section-heading">
+          <div><span class="eyebrow">Your library</span><h2 id="libraryTitle">TACEF manuals</h2></div>
+          <div class="storage-note" id="storageNote">Offline storage is ready</div>
+        </div>
+        <div class="book-grid" id="bookGrid"></div>
+      </section>
+
+      <section class="search-section" id="search" aria-labelledby="searchTitle">
+        <div class="shell search-layout">
+          <div class="search-intro">
+            <span class="eyebrow light">Search the library</span>
+            <h2 id="searchTitle">Find a topic across every manual.</h2>
+            <p>Search by word or phrase, then open the exact page in the reader.</p>
+          </div>
+          <div class="search-workspace">
+            <form class="search-box" id="searchForm" role="search">
+              <label class="sr-only" for="searchInput">Search all manuals</label>
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21 21-4.6-4.6m2.1-5.4a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" /></svg>
+              <input id="searchInput" type="search" minlength="2" placeholder="Try “leadership”, “prayer” or “purpose”" autocomplete="off" />
+              <button type="submit">Search</button>
+            </form>
+            <div class="search-status" id="searchStatus">Enter at least two characters to search.</div>
+            <div class="search-results" id="searchResults" aria-live="polite"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="offline-guide shell" aria-labelledby="offlineTitle">
+        <div class="guide-icon" aria-hidden="true">↓</div>
+        <div><span class="eyebrow">Offline reading</span><h2 id="offlineTitle">Take the manuals with you</h2><p>Choose <strong>Save offline</strong> on any manual. It remains available on this device when there is no internet connection.</p></div>
+        <button class="button button-secondary" id="installGuideButton" type="button">How to install</button>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="shell footer-inner"><div class="footer-brand"><img src="./tacef-favicon.png" alt="" /><div><strong>TACEF Books</strong><span>The African Church Evangelical Fellowship</span></div></div><p>Official manuals, available wherever fellowship takes you.</p></div>
+    </footer>
+
+    <dialog class="app-dialog" id="installDialog">
+      <button class="dialog-close" data-close-dialog aria-label="Close">×</button>
+      <div class="dialog-icon"><img src="./icons/icon-192.png" alt="" /></div>
+      <span class="eyebrow">Install TACEF Books</span>
+      <h2>Keep the library on this device</h2>
+      <div id="installInstructions"></div>
+      <button class="button button-primary full-width" id="dialogInstallButton" type="button">Install now</button>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./catalog.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
