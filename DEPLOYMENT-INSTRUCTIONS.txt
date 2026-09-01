@@ -2,15 +2,20 @@ TACEF BOOKS — INSTALLABLE OFFLINE WEB APP
 ==========================================
 
 WHAT THIS UPDATED PACKAGE CONTAINS
---------------------------
+----------------------------------
 This is the complete ready-to-host TACEF Books website. It contains the
 English Manual, Yoruba Manual, Seed of Purpose Manual, automatic current-week
-opening, offline installation, search, bookmarks and local reading-progress
-features. No account or external service is required. This version also
-includes the mobile-safe in-app manual reader and the refined navy-and-red
-TACEF design. The Living Book reader supports horizontal page swipes on phones,
-edge-aware mouse-wheel page turns on computers, keyboard navigation and an
-animated paper page-turn effect.
+opening, PWA installation, bookmarks, manual search and local reading progress.
+No account, Firebase project or external service is required.
+
+The animated welcome book asks for the reader's name, remembers it only on that
+device and then presents all three manuals. Every manual opens at its verified
+page for the current week, while the home page previews the following week's
+lesson. The Living Book reader includes horizontal phone swipes, edge-aware
+mouse-wheel page turns, keyboard navigation, week navigation and animated page
+turns. Reading controls fade after 30 seconds on computers or 8 seconds on
+phones, with tap/edge reveal, remembered A-/A/A+ sizing and fullscreen mode.
+The spiritual sky theme changes automatically for morning, afternoon and night.
 
 PUBLISH ON GITHUB PAGES
 -----------------------
@@ -20,7 +25,7 @@ PUBLISH ON GITHUB PAGES
 3. Copy every item INSIDE the extracted package into the repository folder.
    Choose Replace the files in the destination when Windows asks. Do not copy
    the ZIP itself, and do not delete the hidden .git folder.
-4. Return to GitHub Desktop. Use the summary "Simplify local offline app", then
+4. Return to GitHub Desktop. Use the summary "Complete TACEF digital book", then
    choose Commit to main and Push origin.
 5. In GitHub, open Settings > Pages.
 6. Under Build and deployment, choose Deploy from a branch.
@@ -39,11 +44,11 @@ iPhone or iPad:
 USE WITHOUT INTERNET
 --------------------
 Open the installed app while online and choose Save offline on each manual
-you want to retain. The app, search index, bookmarks and selected manuals will
+you want to retain. The app, manual search, bookmarks and selected manuals will
 then remain available on that device without internet access.
 
 IMPORTANT
 ---------
-Offline PDF downloads are stored separately on each device. Progress and
-bookmarks are saved only on that device. Clearing the browser's site data will
-remove its saved progress, bookmarks and offline downloads.
+The reader name, preferred reading size, progress, bookmarks and offline PDF
+downloads are stored separately on each device. Clearing the browser's site
+data removes these locally saved preferences and downloads.

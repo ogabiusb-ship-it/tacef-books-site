@@ -1,5 +1,10 @@
 (function () {
   const pages = [73, 78, 83, 88, 92, 94, 99, 104, 109, 114, 115, 119, 124, 129, 134, 136, 141, 146, 151, 156, 158, 163, 167, 172, 176, 177, 182, 187, 192, 197, 199, 204, 209, 214, 219, 221, 226, 232, 237, 242, 244, 249, 254, 259, 264, 265, 270, 275, 280, 281, 285];
+  const manualPages = {
+    english: pages,
+    yoruba: [42, 47, 52, 57, 61, 63, 68, 73, 78, 83, 84, 88, 93, 98, 103, 105, 109, 114, 119, 124, 126, 131, 135, 140, 144, 145, 150, 155, 160, 164, 166, 171, 176, 181, 185, 187, 194, 201, 206, 211, 213, 218, 223, 228, 233, 235, 241, 246, 252, 253, 258],
+    "seed-of-purpose": [39, 45, 54, 61, 68, 72, 80, 89, 96, 103, 107, 115, 123, 130, 137, 140, 148, 156, 164, 171, 175, 183, 190, 198, 204, 208, 215, 222, 230, 236, 240, 246, 252, 258, 264, 268, 275, 281, 288, 293, 297, 304, 311, 319, 325, 329, 336, 341, 348, 352, 358]
+  };
   const titles = [
     "Becoming a Trusted Soldier in the Lord’s Army — Joshua in the School of Divine Making",
     "Joshua: Kingdom Army Built in Courage, Wisdom, and the Spirit-Led Lifestyle",
@@ -55,8 +60,7 @@
   ];
 
   const oneDay = 86400000;
-  const firstMonday = new Date(2026, 7, 31);
-  firstMonday.setHours(0, 0, 0, 0);
+  const firstMondayUtc = Date.UTC(2026, 7, 31);
 
   function formatRange(start, end) {
     const formatter = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" });
@@ -64,21 +68,31 @@
     return `${formatter.format(start)} – ${formatter.format(end)}`;
   }
 
-  function getCurrentStudy(date = new Date()) {
-    const today = new Date(date);
-    today.setHours(0, 0, 0, 0);
-    const rawIndex = Math.floor((today - firstMonday) / (7 * oneDay));
-    const index = Math.max(0, Math.min(pages.length - 1, rawIndex));
-    const start = new Date(firstMonday.getTime() + index * 7 * oneDay);
-    const end = new Date(start.getTime() + 6 * oneDay);
+  function studyAt(index, bookId) {
+    const start = new Date(2026, 7, 31 + index * 7);
+    const end = new Date(2026, 7, 31 + index * 7 + 6);
+    const selectedPages = manualPages[bookId] || manualPages.english;
     return {
       week: index + 1,
-      page: pages[index],
+      page: selectedPages[index],
       title: titles[index],
-      dates: formatRange(start, end),
-      active: rawIndex >= 0 && rawIndex < pages.length
+      dates: formatRange(start, end)
     };
   }
 
-  window.TACEF_STUDY_SCHEDULE = { pages, titles, getCurrentStudy };
+  function getCurrentStudy(date = new Date(), bookId = "english") {
+    const today = new Date(date);
+    const todayUtc = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+    const rawIndex = Math.floor((todayUtc - firstMondayUtc) / (7 * oneDay));
+    const index = Math.max(0, Math.min(pages.length - 1, rawIndex));
+    return { ...studyAt(index, bookId), active: rawIndex >= 0 && rawIndex < pages.length };
+  }
+
+  function getNextStudy(date = new Date(), bookId = "english") {
+    const current = getCurrentStudy(date, bookId);
+    if (current.week >= pages.length) return null;
+    return studyAt(current.week, bookId);
+  }
+
+  window.TACEF_STUDY_SCHEDULE = { pages, manualPages, titles, getCurrentStudy, getNextStudy };
 })();

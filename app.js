@@ -1,19 +1,26 @@
 (function () {
   const books = window.TACEF_CATALOG || [];
-  const currentStudy = window.TACEF_STUDY_SCHEDULE?.getCurrentStudy() || { week: 1, page: 73, title: "Becoming a Trusted Soldier in the Lord’s Army", dates: "31 August – 6 September 2026" };
+  const schedule = window.TACEF_STUDY_SCHEDULE;
+  const today = new Date();
+  const currentStudy = schedule?.getCurrentStudy(today, "english") || { week: 1, page: 73, title: "Becoming a Trusted Soldier in the Lord’s Army", dates: "31 August – 6 September 2026" };
+  const nextStudy = schedule?.getNextStudy(today, "english") || null;
   const manualCacheName = "tacef-manuals-v1";
+  const readerNameKey = "tacef-reader-name";
   const grid = document.getElementById("bookGrid");
   const toast = document.getElementById("toast");
   const installDialog = document.getElementById("installDialog");
   const installInstructions = document.getElementById("installInstructions");
-  const installButtons = [document.getElementById("installButton"), document.getElementById("heroInstallButton"), document.getElementById("installGuideButton")].filter(Boolean);
+  const welcomeOverlay = document.getElementById("welcomeOverlay");
+  const nameStep = document.getElementById("nameStep");
+  const manualStep = document.getElementById("manualStep");
+  const installButtons = [document.getElementById("installButton"), document.getElementById("heroInstallButton")].filter(Boolean);
   let deferredInstallPrompt = null;
-  let searchTimer = null;
 
   const absolute = (path) => new URL(path, window.location.href).href;
   const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
   const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const bookHref = (book) => `./reader.html?book=${encodeURIComponent(book.id)}${book.id === "english" ? `&page=${currentStudy.page}` : ""}`;
+  const studyForBook = (book) => schedule?.getCurrentStudy(today, book.id) || { ...currentStudy, page: 1 };
+  const bookHref = (book) => `./reader.html?book=${encodeURIComponent(book.id)}&page=${studyForBook(book).page}`;
 
   function renderCurrentStudy() {
     document.getElementById("currentStudyWeek").textContent = `This week · Week ${currentStudy.week}`;
@@ -21,6 +28,11 @@
     document.getElementById("currentStudyDates").textContent = currentStudy.dates;
     document.getElementById("currentStudyNumber").textContent = String(currentStudy.week).padStart(2, "0");
     document.getElementById("currentStudyLink").href = `./reader.html?book=english&page=${currentStudy.page}`;
+    const preview = document.getElementById("nextStudyPreview");
+    if (!nextStudy) { preview.hidden = true; return; }
+    document.getElementById("nextStudyWeek").textContent = String(nextStudy.week).padStart(2, "0");
+    document.getElementById("nextStudyTitle").textContent = nextStudy.title;
+    document.getElementById("nextStudyDates").textContent = nextStudy.dates;
   }
 
   function showToast(message) {
@@ -37,6 +49,61 @@
     status.querySelector("span").textContent = navigator.onLine ? "Online" : "Offline";
   }
 
+  function cleanReaderName(value) {
+    return String(value || "").trim().replace(/\s+/g, " ").slice(0, 32);
+  }
+
+  function updateReaderIdentity(name) {
+    const displayName = cleanReaderName(name) || "Reader";
+    document.getElementById("profileName").textContent = displayName;
+    document.getElementById("profileInitial").textContent = displayName.charAt(0).toLocaleUpperCase();
+    document.getElementById("welcomeName").textContent = displayName;
+    return displayName;
+  }
+
+  function renderWelcomeManuals() {
+    document.getElementById("welcomeWeek").textContent = currentStudy.week;
+    document.getElementById("welcomeManuals").innerHTML = books.map((book, index) => {
+      const study = studyForBook(book);
+      return `<a class="welcome-manual" href="${bookHref(book)}">
+        <img src="${book.cover}" alt="" />
+        <span><small>Volume ${String(index + 1).padStart(2, "0")} · ${book.language}</small><strong>${book.shortTitle}</strong><em>Week ${study.week} · Page ${study.page} →</em></span>
+      </a>`;
+    }).join("");
+  }
+
+  function showNameStep() {
+    nameStep.hidden = false;
+    manualStep.hidden = true;
+    welcomeOverlay.classList.remove("show-manuals");
+    const savedName = localStorage.getItem(readerNameKey) || "";
+    document.getElementById("readerName").value = savedName;
+    window.setTimeout(() => document.getElementById("readerName").focus(), 420);
+  }
+
+  function showManualStep(name) {
+    updateReaderIdentity(name);
+    renderWelcomeManuals();
+    nameStep.hidden = true;
+    manualStep.hidden = false;
+    welcomeOverlay.classList.add("show-manuals");
+  }
+
+  function openWelcome(editName = false) {
+    const savedName = cleanReaderName(localStorage.getItem(readerNameKey));
+    welcomeOverlay.hidden = false;
+    document.body.classList.add("welcome-open");
+    if (editName || !savedName) showNameStep();
+    else showManualStep(savedName);
+    requestAnimationFrame(() => welcomeOverlay.classList.add("visible"));
+  }
+
+  function closeWelcome() {
+    welcomeOverlay.classList.remove("visible");
+    document.body.classList.remove("welcome-open");
+    window.setTimeout(() => { welcomeOverlay.hidden = true; }, 360);
+  }
+
   async function isBookCached(book) {
     if (!("caches" in window)) return false;
     const cache = await caches.open(manualCacheName);
@@ -44,24 +111,27 @@
   }
 
   async function renderBooks() {
-    grid.innerHTML = books.map((book, index) => `
+    grid.innerHTML = books.map((book, index) => {
+      const study = studyForBook(book);
+      return `
       <article class="book-card accent-${book.accent}" data-book-id="${book.id}">
         <a class="book-cover" href="${bookHref(book)}" aria-label="Read ${book.title}">
           <img src="${book.cover}" alt="Cover of ${book.title}" loading="lazy" />
           <span class="volume-index">Volume ${String(index + 1).padStart(2, "0")}</span>
           <span class="offline-tag" hidden>Available offline</span>
-          ${book.id === "english" ? `<span class="current-week-tag">Week ${currentStudy.week} · Page ${currentStudy.page}</span>` : ""}
+          <span class="current-week-tag">Week ${study.week} · Page ${study.page}</span>
         </a>
         <div class="book-details">
           <div class="book-kicker"><span>${book.language}</span><span>${book.pages} pages</span></div>
           <h3>${book.shortTitle}</h3><p>${book.description}</p>
           <div class="book-actions">
-            <a class="button button-primary" href="${bookHref(book)}">${book.id === "english" ? "Open this week" : "Read manual"}</a>
+            <a class="button button-primary" href="${bookHref(book)}">Open Week ${study.week}</a>
             <button class="button button-secondary download-button" data-download="${book.id}" type="button">Save offline</button>
           </div>
           <small class="download-meta">${book.size} · Progress and bookmarks stay on this device</small>
         </div>
-      </article>`).join("");
+      </article>`;
+    }).join("");
 
     await Promise.all(books.map(refreshBookStatus));
     grid.querySelectorAll("[data-download]").forEach((button) => button.addEventListener("click", () => toggleOffline(button.dataset.download)));
@@ -102,7 +172,6 @@
     } finally {
       button.disabled = false;
       await refreshBookStatus(book);
-      updateStorageNote();
     }
   }
 
@@ -117,58 +186,6 @@
     document.getElementById("continueMeta").textContent = `Continue from page ${recent[1].page || 1} of ${book.pages}`;
     document.getElementById("continueLink").href = `./reader.html?book=${encodeURIComponent(book.id)}&page=${recent[1].page || 1}`;
     panel.classList.remove("hidden");
-  }
-
-  async function updateStorageNote() {
-    const note = document.getElementById("storageNote");
-    if (!navigator.storage || !navigator.storage.estimate) return;
-    const estimate = await navigator.storage.estimate();
-    const used = estimate.usage ? `${(estimate.usage / 1048576).toFixed(1)} MB used on this device` : "Offline storage is ready";
-    note.textContent = used;
-  }
-
-  function normalise(value) {
-    return value.toLocaleLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
-  }
-
-  function escapeHtml(value) {
-    return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character]);
-  }
-
-  function makeSnippet(text, rawQuery) {
-    const clean = text.replace(/\s+/g, " ").trim();
-    const at = normalise(clean).indexOf(normalise(rawQuery));
-    const start = Math.max(0, at - 90);
-    const end = Math.min(clean.length, Math.max(at + rawQuery.length + 110, 210));
-    return `${start ? "…" : ""}${clean.slice(start, end)}${end < clean.length ? "…" : ""}`;
-  }
-
-  async function searchLibrary(query) {
-    const status = document.getElementById("searchStatus");
-    const results = document.getElementById("searchResults");
-    if (query.trim().length < 2) { status.textContent = "Enter at least two characters to search."; results.innerHTML = ""; return; }
-    status.textContent = "Searching the manuals…";
-    results.innerHTML = '<div class="result-skeleton"></div><div class="result-skeleton"></div>';
-    try {
-      const indexes = (await Promise.all(books.map(async (book) => {
-        try { return { book, pages: await fetch(book.index).then((r) => { if (!r.ok) throw new Error(); return r.json(); }) }; }
-        catch (_) { return null; }
-      }))).filter(Boolean);
-      if (!indexes.length) throw new Error();
-      const needle = normalise(query.trim());
-      const matches = [];
-      for (const { book, pages } of indexes) {
-        for (const page of pages) {
-          if (normalise(page.text).includes(needle)) matches.push({ book, page: page.page, snippet: makeSnippet(page.text, query) });
-          if (matches.length >= 36) break;
-        }
-      }
-      status.textContent = matches.length ? `${matches.length}${matches.length === 36 ? "+" : ""} matching pages` : `No pages found for “${query}”.`;
-      results.innerHTML = matches.map((match) => `<a class="search-result" href="./reader.html?book=${match.book.id}&page=${match.page}"><span class="result-book">${match.book.shortTitle} · Page ${match.page}</span><strong>${escapeHtml(match.snippet)}</strong><span class="result-arrow">→</span></a>`).join("");
-    } catch (_) {
-      status.textContent = navigator.onLine ? "Search is temporarily unavailable." : "Download a manual before searching it offline.";
-      results.innerHTML = "";
-    }
   }
 
   function showInstallDialog() {
@@ -196,13 +213,26 @@
   document.getElementById("dialogInstallButton").addEventListener("click", async () => { if (!deferredInstallPrompt) return; await deferredInstallPrompt.prompt(); deferredInstallPrompt = null; });
   document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => button.closest("dialog").close()));
 
-  document.getElementById("searchForm").addEventListener("submit", (event) => { event.preventDefault(); searchLibrary(document.getElementById("searchInput").value); });
-  document.getElementById("searchInput").addEventListener("input", (event) => { clearTimeout(searchTimer); searchTimer = setTimeout(() => searchLibrary(event.target.value), 450); });
+  document.getElementById("nameForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const name = cleanReaderName(document.getElementById("readerName").value);
+    if (!name) return;
+    localStorage.setItem(readerNameKey, name);
+    showManualStep(name);
+  });
+  document.getElementById("continueAsGuest").addEventListener("click", () => showManualStep("Reader"));
+  document.getElementById("profileButton").addEventListener("click", () => openWelcome(true));
+  document.getElementById("welcomeCloseButton").addEventListener("click", closeWelcome);
+  document.getElementById("browseLibraryButton").addEventListener("click", () => { closeWelcome(); document.getElementById("library").scrollIntoView({ behavior: "smooth" }); });
+  welcomeOverlay.addEventListener("click", (event) => { if (event.target === welcomeOverlay) closeWelcome(); });
+  window.addEventListener("keydown", (event) => { if (event.key === "Escape" && !welcomeOverlay.hidden) closeWelcome(); });
 
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+  updateReaderIdentity(localStorage.getItem(readerNameKey));
+  document.getElementById("footerYear").textContent = new Date().getFullYear();
   renderCurrentStudy();
   updateNetworkStatus();
   renderBooks();
   renderContinueReading();
-  updateStorageNote();
+  window.setTimeout(() => openWelcome(false), 260);
 })();

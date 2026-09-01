@@ -1,7 +1,7 @@
 {
   "name": "TACEF Books",
   "short_name": "TACEF Books",
-  "description": "Read, search and save official TACEF manuals for offline use.",
+  "description": "An immersive Christian digital-book experience for official TACEF weekly manuals.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -14,7 +14,7 @@
     {"src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
   ],
   "shortcuts": [
-    {"name": "Open library", "short_name": "Library", "url": "./index.html#library", "icons": [{"src": "./icons/icon-192.png", "sizes": "192x192"}]},
-    {"name": "Search manuals", "short_name": "Search", "url": "./index.html#search", "icons": [{"src": "./icons/icon-192.png", "sizes": "192x192"}]}
+    {"name": "Choose a manual", "short_name": "Manuals", "url": "./index.html#library", "icons": [{"src": "./icons/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Open current lesson", "short_name": "Current lesson", "url": "./index.html", "icons": [{"src": "./icons/icon-192.png", "sizes": "192x192"}]}
   ]
 }

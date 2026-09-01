@@ -5,9 +5,15 @@ GlobalWorkerOptions.workerSrc = new URL("./vendor/pdfjs/pdf.worker.min.mjs", imp
 const books = window.TACEF_CATALOG || [];
 const params = new URLSearchParams(window.location.search);
 const book = books.find((item) => item.id === params.get("book")) || books[0];
+const readerName = String(localStorage.getItem("tacef-reader-name") || "").trim();
+const currentStudy = window.TACEF_STUDY_SCHEDULE?.getCurrentStudy(new Date(), book.id);
+const weekPages = window.TACEF_STUDY_SCHEDULE?.manualPages?.[book.id] || [1];
+const weekTitles = window.TACEF_STUDY_SCHEDULE?.titles || [];
 const manualCacheName = "tacef-manuals-v1";
 const progressKey = "tacef-progress";
 const bookmarksKey = "tacef-bookmarks";
+const zoomKey = "tacef-reading-zoom";
+const zoomLevels = [0.82, 1, 1.24, 1.48];
 const pageInput = document.getElementById("pageInput");
 const toast = document.getElementById("toast");
 const stage = document.querySelector(".pdf-stage");
@@ -29,6 +35,10 @@ let page = Math.min(totalPages, Math.max(1, Number(params.get("page")) || getSav
 let isTurning = false;
 let wheelDistance = 0;
 let wheelResetTimer = null;
+let readingZoom = Number(localStorage.getItem(zoomKey)) || 1;
+let chromeTimer = null;
+
+readingZoom = zoomLevels.reduce((closest, value) => Math.abs(value - readingZoom) < Math.abs(closest - readingZoom) ? value : closest, 1);
 
 const absolute = (path) => new URL(path, window.location.href).href;
 
@@ -72,6 +82,32 @@ function saveProgress() {
   localStorage.setItem(progressKey, JSON.stringify(progress));
 }
 
+function weekIndexForPage(value = page) {
+  let index = 0;
+  for (let position = 0; position < weekPages.length; position += 1) {
+    if (value >= weekPages[position]) index = position;
+    else break;
+  }
+  return index;
+}
+
+function updateWeekControls() {
+  const index = weekIndexForPage();
+  const label = `Week ${index + 1}`;
+  document.getElementById("weekMenuButton").textContent = label;
+  document.getElementById("previousWeekButton").disabled = index <= 0;
+  document.getElementById("nextWeekButton").disabled = index >= weekPages.length - 1;
+  document.getElementById("storyMarkerTitle").textContent = `${label} · ${book.shortTitle}`;
+}
+
+function updateZoomControls() {
+  const index = zoomLevels.indexOf(readingZoom);
+  document.getElementById("zoomOutButton").disabled = index <= 0;
+  document.getElementById("zoomInButton").disabled = index >= zoomLevels.length - 1;
+  document.getElementById("zoomResetButton").classList.toggle("active", readingZoom === 1);
+  document.getElementById("zoomResetButton").title = `${Math.round(readingZoom * 100)}%`;
+}
+
 function updatePageControls() {
   const progress = Math.max(0, Math.min(100, (page / totalPages) * 100));
   pageInput.value = page;
@@ -84,6 +120,8 @@ function updatePageControls() {
   document.getElementById("mobilePrevPage").disabled = page <= 1;
   document.getElementById("nextPage").disabled = page >= totalPages;
   document.getElementById("mobileNextPage").disabled = page >= totalPages;
+  updateWeekControls();
+  updateZoomControls();
 }
 
 async function renderPage({ quiet = false } = {}) {
@@ -97,7 +135,8 @@ async function renderPage({ quiet = false } = {}) {
     if (sequence !== renderSequence) return;
 
     const baseViewport = pdfPage.getViewport({ scale: 1 });
-    const availableWidth = Math.max(260, Math.min(stage.clientWidth - (window.innerWidth < 700 ? 18 : 44), 1120));
+    const fitWidth = Math.max(260, Math.min(stage.clientWidth - (window.innerWidth < 700 ? 18 : 44), 1120));
+    const availableWidth = fitWidth * readingZoom;
     const viewport = pdfPage.getViewport({ scale: availableWidth / baseViewport.width });
     const outputScale = Math.min(window.devicePixelRatio || 1, 2.25);
     const context = canvas.getContext("2d", { alpha: false });
@@ -199,6 +238,62 @@ function openPage(nextPage, announce = false) {
   if (pdfDocument) renderPage();
 }
 
+function setReadingZoom(value) {
+  const nextZoom = zoomLevels.reduce((closest, level) => Math.abs(level - value) < Math.abs(closest - value) ? level : closest, 1);
+  if (nextZoom === readingZoom) return;
+  readingZoom = nextZoom;
+  localStorage.setItem(zoomKey, String(readingZoom));
+  updateZoomControls();
+  if (pdfDocument) renderPage({ quiet: true });
+  showToast(`Reading size ${Math.round(readingZoom * 100)}%`);
+}
+
+function showWeeks() {
+  const activeIndex = weekIndexForPage();
+  const calendarIndex = Math.max(0, (currentStudy?.week || 1) - 1);
+  const list = document.getElementById("weekList");
+  list.innerHTML = weekPages.map((weekPage, index) => `<button type="button" data-week-index="${index}" class="${index === activeIndex ? "active" : ""} ${index === calendarIndex ? "current" : ""}" ${index === activeIndex ? 'aria-current="page"' : ""}>
+    <span>Week ${index + 1}</span><small>Page ${weekPage}</small><em>${weekTitles[index] || "Bible study lesson"}</em>
+  </button>`).join("");
+  document.getElementById("weeksDialogMeta").textContent = currentStudy ? `Current calendar lesson: Week ${currentStudy.week} · ${currentStudy.dates}` : "Choose any available lesson week.";
+  list.querySelectorAll("[data-week-index]").forEach((button) => button.addEventListener("click", () => {
+    document.getElementById("weeksDialog").close();
+    openPage(weekPages[Number(button.dataset.weekIndex)], true);
+  }));
+  document.getElementById("weeksDialog").showModal();
+}
+
+function scheduleChromeHide() {
+  clearTimeout(chromeTimer);
+  const delay = window.matchMedia("(max-width: 700px)").matches ? 8000 : 30000;
+  chromeTimer = window.setTimeout(hideReaderChrome, delay);
+}
+
+function hideReaderChrome() {
+  const focusedControl = document.activeElement?.closest?.(".reader-header, .reader-rail, .reader-tool-dock, dialog");
+  if (document.querySelector("dialog[open]") || focusedControl || isTurning) { scheduleChromeHide(); return; }
+  document.body.classList.add("reader-chrome-hidden");
+}
+
+function showReaderChrome() {
+  document.body.classList.remove("reader-chrome-hidden");
+  scheduleChromeHide();
+}
+
+function toggleReaderChrome() {
+  if (document.body.classList.contains("reader-chrome-hidden")) showReaderChrome();
+  else { clearTimeout(chromeTimer); hideReaderChrome(); }
+}
+
+async function toggleFullscreen() {
+  try {
+    if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch (_) {
+    showToast("Fullscreen is not available in this browser.");
+  }
+}
+
 function dismissGestureGuide() {
   gestureGuide.classList.add("used");
 }
@@ -207,7 +302,8 @@ let touchStart = null;
 stage.addEventListener("touchstart", (event) => {
   if (event.touches.length !== 1 || document.querySelector("dialog[open]")) return;
   const touch = event.touches[0];
-  touchStart = { x: touch.clientX, y: touch.clientY, at: Date.now() };
+  touchStart = { x: touch.clientX, y: touch.clientY, at: Date.now(), interactive: Boolean(event.target.closest?.("button, a, input")) };
+  scheduleChromeHide();
 }, { passive: true });
 
 stage.addEventListener("touchend", (event) => {
@@ -216,14 +312,18 @@ stage.addEventListener("touchend", (event) => {
   const distanceX = touch.clientX - touchStart.x;
   const distanceY = touch.clientY - touchStart.y;
   const elapsed = Date.now() - touchStart.at;
+  const interactive = touchStart.interactive;
   touchStart = null;
 
+  if (interactive) { showReaderChrome(); return; }
+  if (elapsed < 420 && Math.abs(distanceX) < 12 && Math.abs(distanceY) < 12) { toggleReaderChrome(); return; }
   if (elapsed > 900 || Math.abs(distanceX) < 58 || Math.abs(distanceX) < Math.abs(distanceY) * 1.25) return;
   dismissGestureGuide();
   openPage(page + (distanceX < 0 ? 1 : -1), true);
 }, { passive: true });
 
 stage.addEventListener("wheel", (event) => {
+  scheduleChromeHide();
   if (event.ctrlKey || isTurning || document.querySelector("dialog[open]") || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
   const atTop = stage.scrollTop <= 2;
   const atBottom = stage.scrollTop + stage.clientHeight >= stage.scrollHeight - 2;
@@ -359,8 +459,8 @@ async function searchBook(query) {
 
 document.title = `${book.shortTitle} · TACEF Books`;
 document.getElementById("readerBookTitle").textContent = book.shortTitle;
-document.getElementById("readerBookMeta").textContent = `${book.language} · ${book.pages} pages`;
-document.getElementById("storyMarkerTitle").textContent = book.shortTitle;
+document.getElementById("readerBookMeta").textContent = `${readerName ? `Welcome ${readerName} · ` : ""}${book.language} · ${book.pages} pages`;
+document.getElementById("storyMarkerTitle").textContent = currentStudy ? `Week ${currentStudy.week} · ${book.shortTitle}` : book.shortTitle;
 document.getElementById("originalPdfLink").href = book.file;
 document.getElementById("errorPdfLink").href = book.file;
 updatePageControls();
@@ -376,19 +476,41 @@ document.getElementById("mobilePageButton").addEventListener("click", () => {
 pageInput.addEventListener("change", () => openPage(pageInput.value, true));
 document.getElementById("bookmarkButton").addEventListener("click", toggleBookmark);
 document.getElementById("bookmarksButton").addEventListener("click", showBookmarks);
+document.getElementById("weeksButton").addEventListener("click", showWeeks);
+document.getElementById("weekMenuButton").addEventListener("click", showWeeks);
+document.getElementById("previousWeekButton").addEventListener("click", () => openPage(weekPages[Math.max(0, weekIndexForPage() - 1)], true));
+document.getElementById("nextWeekButton").addEventListener("click", () => openPage(weekPages[Math.min(weekPages.length - 1, weekIndexForPage() + 1)], true));
+document.getElementById("zoomOutButton").addEventListener("click", () => setReadingZoom(zoomLevels[Math.max(0, zoomLevels.indexOf(readingZoom) - 1)]));
+document.getElementById("zoomResetButton").addEventListener("click", () => setReadingZoom(1));
+document.getElementById("zoomInButton").addEventListener("click", () => setReadingZoom(zoomLevels[Math.min(zoomLevels.length - 1, zoomLevels.indexOf(readingZoom) + 1)]));
+document.getElementById("fullscreenButton").addEventListener("click", toggleFullscreen);
 document.getElementById("offlineButton").addEventListener("click", saveOffline);
 document.getElementById("retryReader").addEventListener("click", loadDocument);
 document.getElementById("readerSearchButton").addEventListener("click", () => document.getElementById("searchDialog").showModal());
 document.getElementById("readerSearchForm").addEventListener("submit", (event) => { event.preventDefault(); searchBook(document.getElementById("readerSearchInput").value); });
-document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => button.closest("dialog").close()));
+document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => { button.closest("dialog").close(); showReaderChrome(); }));
 window.addEventListener("online", updateNetworkStatus);
 window.addEventListener("offline", updateNetworkStatus);
 window.addEventListener("keydown", (event) => {
+  scheduleChromeHide();
   if (event.target.matches("input") || document.querySelector("dialog[open]")) return;
   if (event.key === "ArrowLeft") openPage(page - 1);
   if (event.key === "ArrowRight") openPage(page + 1);
   if (event.key === "PageUp") openPage(page - 1);
   if (event.key === "PageDown") openPage(page + 1);
+});
+window.addEventListener("pointermove", (event) => {
+  if (event.pointerType === "mouse" && (event.clientY <= 96 || event.clientX <= 118)) showReaderChrome();
+});
+document.querySelectorAll(".reader-header, .reader-rail, .reader-tool-dock").forEach((element) => {
+  element.addEventListener("pointerenter", showReaderChrome);
+  element.addEventListener("focusin", showReaderChrome);
+});
+document.addEventListener("fullscreenchange", () => {
+  const button = document.getElementById("fullscreenButton");
+  button.textContent = document.fullscreenElement ? "×" : "⛶";
+  button.setAttribute("aria-label", document.fullscreenElement ? "Exit fullscreen" : "Enter fullscreen");
+  showReaderChrome();
 });
 
 let resizeTimer;
@@ -402,3 +524,5 @@ updateNetworkStatus();
 updateOfflineButton();
 openPage(page);
 loadDocument();
+if (!document.documentElement.requestFullscreen) document.getElementById("fullscreenButton").hidden = true;
+showReaderChrome();
