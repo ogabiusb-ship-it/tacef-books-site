@@ -23,6 +23,8 @@ The spiritual sky theme changes automatically using the reader's local time:
 sunrise and warm light from 5am, a calm blue daytime sky from noon, and a deep
 blue moonlit atmosphere from 6pm. Lightweight rays, clouds, stars and restrained
 cross geometry reinforce the Christian identity without distracting from text.
+The manual reader itself uses a consistent dark navy surround in the afternoon
+so no bright blue strip appears when its distraction-free header is hidden.
 
 PUBLISH ON GITHUB PAGES
 -----------------------

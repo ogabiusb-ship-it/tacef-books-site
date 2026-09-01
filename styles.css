@@ -1291,7 +1291,7 @@ body[data-time-theme="night"] .hero {
 .reader-body::before,
 .reader-body::after { z-index: 0; }
 .reader-body[data-time-theme="morning"] .pdf-stage { background: radial-gradient(circle at 50% 0%, rgba(255, 211, 112, .16), transparent 29rem), linear-gradient(145deg, #17276f, #05082c); }
-.reader-body[data-time-theme="afternoon"] .pdf-stage { background: radial-gradient(circle at 50% 0%, rgba(142, 190, 255, .2), transparent 32rem), linear-gradient(145deg, #122f7c, #05082c); }
+.reader-body[data-time-theme="afternoon"] .pdf-stage { background: linear-gradient(180deg, #08113d 0%, #05092f 42%, #02051f 100%); }
 .reader-body[data-time-theme="night"] .pdf-stage { background: radial-gradient(circle at 52% 0%, rgba(90, 110, 229, .22), transparent 34rem), linear-gradient(145deg, #090e3d, #02051f); }
 
 @keyframes sky-drift { to { transform: translate3d(3vw, 1.5vh, 0) scale(1.03); } }
