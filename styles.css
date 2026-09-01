@@ -435,3 +435,164 @@ body {
   .mobile-page-bar button { background: rgba(255, 255, 255, .08); border-color: rgba(166, 181, 255, .2); }
   .mobile-page-bar button:not(:disabled):active { background: rgba(224, 25, 45, .28); }
 }
+
+/* Current study, refined identity and optional account */
+.brand { min-width: 0; gap: 12px; }
+.brand span { display: grid; }
+.brand .brand-emblem {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  place-items: center;
+  overflow: hidden;
+  background: rgba(255, 255, 255, .97);
+  border: 1px solid rgba(255, 255, 255, .72);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(0, 0, 24, .3), 0 0 0 5px rgba(255, 255, 255, .04);
+}
+.brand .brand-emblem img {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  object-fit: contain;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  box-shadow: none;
+}
+.brand .brand-copy { line-height: 1.05; }
+.brand .brand-copy strong { color: #fff; font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 1rem; font-weight: 850; letter-spacing: -.01em; text-transform: uppercase; }
+.brand .brand-copy small { margin-top: 5px; color: #929bc9; font-size: .61rem; font-weight: 700; letter-spacing: .16em; }
+
+.auth-button {
+  min-height: 40px;
+  padding: 5px 11px 5px 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #eef1ff;
+  background: rgba(255, 255, 255, .065);
+  border: 1px solid rgba(165, 179, 255, .2);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: .76rem;
+  font-weight: 750;
+  backdrop-filter: blur(12px);
+}
+.auth-button:hover { background: rgba(255, 255, 255, .11); border-color: rgba(184, 196, 255, .38); }
+.auth-avatar {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  flex: 0 0 29px;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(145deg, #283aa5, #101b72);
+  border: 1px solid rgba(190, 202, 255, .35);
+  border-radius: 50%;
+  font-size: .68rem;
+  font-weight: 900;
+}
+.auth-avatar.signed-in { background: linear-gradient(145deg, #ed293e, #aa0714); border-color: rgba(255, 166, 174, .45); }
+
+.hero { grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr); }
+.hero h1 { max-width: 810px; font-size: clamp(2.75rem, 5.15vw, 5.35rem); line-height: .95; text-transform: none; }
+.hero-copy > p strong { color: #fff; font-weight: 780; }
+.study-visual { position: relative; width: min(400px, 88vw); aspect-ratio: .86; place-self: center; }
+.study-glow {
+  position: absolute;
+  inset: 5%;
+  background: radial-gradient(circle at 50% 38%, rgba(88, 108, 244, .43), rgba(32, 45, 150, .1) 48%, transparent 72%);
+  border: 1px solid rgba(141, 158, 255, .12);
+  border-radius: 48% 52% 44% 56%;
+  filter: drop-shadow(0 35px 65px rgba(0, 0, 28, .4));
+}
+.study-glow::before,
+.study-glow::after { content: ""; position: absolute; border: 1px solid rgba(156, 171, 255, .16); border-radius: 50%; }
+.study-glow::before { inset: -8%; transform: rotate(-12deg); }
+.study-glow::after { inset: 11%; border-style: dashed; transform: rotate(24deg); }
+.study-logo {
+  position: absolute;
+  z-index: 2;
+  top: 16%;
+  left: 7%;
+  right: 7%;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, .97);
+  border: 1px solid rgba(255, 255, 255, .82);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 1, 26, .42), 0 0 0 8px rgba(255, 255, 255, .035);
+}
+.study-logo img { width: 100%; height: auto; object-fit: contain; }
+.study-number {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  bottom: 12%;
+  width: 174px;
+  min-height: 184px;
+  padding: 18px;
+  display: grid;
+  place-items: center;
+  transform: translateX(-50%);
+  color: #fff;
+  background: linear-gradient(150deg, rgba(31, 45, 151, .86), rgba(8, 13, 63, .88));
+  border: 1px solid rgba(169, 183, 255, .3);
+  border-radius: 28px;
+  box-shadow: 0 28px 70px rgba(0, 0, 30, .48), inset 0 1px 0 rgba(255, 255, 255, .1);
+  backdrop-filter: blur(24px);
+}
+.study-number::before { content: ""; position: absolute; top: 0; width: 54px; height: 4px; background: var(--red); box-shadow: 0 0 18px rgba(224, 25, 45, .72); }
+.study-number small { color: #aeb9ef; font-size: .62rem; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+.study-number strong { font-size: 4.4rem; font-weight: 900; line-height: .9; letter-spacing: -.08em; }
+.study-number span { color: #fff; font-size: .68rem; font-weight: 850; letter-spacing: .28em; }
+.study-language { position: absolute; z-index: 4; right: 3%; bottom: 19%; display: grid; gap: 7px; }
+.study-language span { width: 37px; height: 37px; display: grid; place-items: center; color: #d7ddff; background: rgba(8, 14, 66, .76); border: 1px solid rgba(157, 173, 255, .26); border-radius: 50%; font-size: .55rem; font-weight: 900; box-shadow: 0 10px 25px rgba(0, 0, 25, .28); backdrop-filter: blur(14px); }
+.current-week-tag { position: absolute; z-index: 3; left: 13px; bottom: 13px; padding: 7px 10px; color: #fff; background: rgba(192, 8, 25, .92); border: 1px solid rgba(255, 151, 160, .38); border-radius: 999px; box-shadow: 0 9px 24px rgba(88, 0, 8, .32); font-size: .68rem; font-weight: 820; }
+
+.account-dialog { width: min(460px, calc(100% - 28px)); text-align: center; }
+.account-symbol { width: 62px; height: 62px; margin: 0 auto 18px; display: grid; place-items: center; color: #fff; background: linear-gradient(145deg, #283aa5, #0d1767); border: 1px solid rgba(180, 192, 255, .35); border-radius: 20px; box-shadow: 0 18px 44px rgba(0, 0, 25, .32); font-size: 1.45rem; font-weight: 900; }
+.account-dialog > p { margin: 0 0 19px; }
+.account-identity { margin: 19px 0; padding: 13px; display: flex; align-items: center; gap: 11px; text-align: left; background: rgba(255, 255, 255, .06); border: 1px solid rgba(170, 184, 255, .18); border-radius: 14px; }
+.account-identity[hidden] { display: none; }
+.account-identity div { min-width: 0; display: grid; }
+.account-identity strong { color: #fff; }
+.account-identity small { overflow: hidden; color: #aeb8df; text-overflow: ellipsis; white-space: nowrap; }
+.google-button { margin-top: 8px; color: #16182c; background: #fff; border-color: rgba(255, 255, 255, .8); }
+.google-button:hover { background: #f1f3ff; }
+.google-g { color: #356edb; font-size: 1.05rem; font-weight: 900; }
+.account-dialog .button + .button { margin-top: 9px; }
+.auth-status { min-height: 42px; margin: 15px 0 0 !important; padding: 10px 12px; color: #aeb8df !important; background: rgba(255, 255, 255, .045); border-radius: 10px; font-size: .75rem; }
+.auth-status[data-state="synced"] { color: #aef0d1 !important; }
+.auth-status[data-state="warning"] { color: #ffd4a6 !important; }
+.auth-status[data-state="error"] { color: #ffadb6 !important; }
+
+.reader-emblem { width: 44px; height: 44px; flex: 0 0 44px; display: grid; place-items: center; overflow: hidden; background: #fff; border: 1px solid rgba(255, 255, 255, .65); border-radius: 13px; box-shadow: 0 9px 22px rgba(0, 0, 25, .28); }
+.reader-title .reader-emblem img { width: 39px; height: 39px; padding: 0; object-fit: contain; background: transparent; border: 0; border-radius: 9px; box-shadow: none; }
+.reader-auth { min-height: 38px; }
+
+@media (max-width: 940px) {
+  .brand .brand-copy small { display: none; }
+  .header-actions { gap: 10px; }
+  .hero { grid-template-columns: 1fr .62fr; }
+  .study-visual { width: min(330px, 88vw); }
+  .study-number { width: 150px; min-height: 160px; }
+  .study-number strong { font-size: 3.8rem; }
+  .reader-auth > span:last-child { display: none; }
+  .reader-auth { padding-right: 5px; }
+}
+
+@media (max-width: 700px) {
+  .brand .brand-emblem { width: 42px; height: 42px; flex-basis: 42px; border-radius: 12px; }
+  .brand .brand-emblem img { width: 36px; height: 36px; }
+  .brand .brand-copy strong { font-size: .82rem; }
+  .header-actions { gap: 6px; }
+  .auth-button { min-height: 38px; padding-right: 5px; }
+  .auth-button > span:last-child { display: none; }
+  .hero h1 { font-size: clamp(2.65rem, 11.5vw, 4.2rem); }
+  .study-visual { width: min(320px, 92vw); margin: 34px auto 0; }
+  .study-logo { top: 14%; }
+  .study-number { bottom: 10%; }
+  .reader-emblem { width: 38px; height: 38px; flex-basis: 38px; }
+  .reader-title .reader-emblem img { width: 34px; height: 34px; }
+}

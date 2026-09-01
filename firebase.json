@@ -1,0 +1,23 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      "firestore.rules",
+      "DEPLOYMENT-INSTRUCTIONS.txt",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "headers": [
+      {
+        "source": "/service-worker.js",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache" }
+        ]
+      }
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}

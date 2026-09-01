@@ -64,6 +64,7 @@ function saveProgress() {
   const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
   progress[book.id] = { page, updated: Date.now() };
   localStorage.setItem(progressKey, JSON.stringify(progress));
+  window.dispatchEvent(new CustomEvent("tacef:local-state-changed"));
 }
 
 function updatePageControls() {
@@ -161,6 +162,7 @@ function setBookmarks(pages) {
   const all = JSON.parse(localStorage.getItem(bookmarksKey) || "{}");
   all[book.id] = [...new Set(pages)].sort((a, b) => a - b);
   localStorage.setItem(bookmarksKey, JSON.stringify(all));
+  window.dispatchEvent(new CustomEvent("tacef:local-state-changed"));
 }
 
 function updateBookmarkButton() {
@@ -286,6 +288,7 @@ document.getElementById("readerSearchForm").addEventListener("submit", (event) =
 document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => button.closest("dialog").close()));
 window.addEventListener("online", updateNetworkStatus);
 window.addEventListener("offline", updateNetworkStatus);
+window.addEventListener("tacef:cloud-state-loaded", () => updateBookmarkButton());
 window.addEventListener("keydown", (event) => {
   if (event.target.matches("input") || document.querySelector("dialog[open]")) return;
   if (event.key === "ArrowLeft") openPage(page - 1);

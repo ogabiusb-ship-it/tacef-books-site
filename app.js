@@ -1,5 +1,6 @@
 (function () {
   const books = window.TACEF_CATALOG || [];
+  const currentStudy = window.TACEF_STUDY_SCHEDULE?.getCurrentStudy() || { week: 1, page: 73, title: "Becoming a Trusted Soldier in the Lord’s Army", dates: "31 August – 6 September 2026" };
   const manualCacheName = "tacef-manuals-v1";
   const grid = document.getElementById("bookGrid");
   const toast = document.getElementById("toast");
@@ -12,6 +13,15 @@
   const absolute = (path) => new URL(path, window.location.href).href;
   const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
   const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const bookHref = (book) => `./reader.html?book=${encodeURIComponent(book.id)}${book.id === "english" ? `&page=${currentStudy.page}` : ""}`;
+
+  function renderCurrentStudy() {
+    document.getElementById("currentStudyWeek").textContent = `This week · Week ${currentStudy.week}`;
+    document.getElementById("currentStudyTitle").textContent = currentStudy.title;
+    document.getElementById("currentStudyDates").textContent = currentStudy.dates;
+    document.getElementById("currentStudyNumber").textContent = String(currentStudy.week).padStart(2, "0");
+    document.getElementById("currentStudyLink").href = `./reader.html?book=english&page=${currentStudy.page}`;
+  }
 
   function showToast(message) {
     toast.textContent = message;
@@ -36,15 +46,16 @@
   async function renderBooks() {
     grid.innerHTML = books.map((book) => `
       <article class="book-card accent-${book.accent}" data-book-id="${book.id}">
-        <a class="book-cover" href="./reader.html?book=${encodeURIComponent(book.id)}" aria-label="Read ${book.title}">
+        <a class="book-cover" href="${bookHref(book)}" aria-label="Read ${book.title}">
           <img src="${book.cover}" alt="Cover of ${book.title}" loading="lazy" />
           <span class="offline-tag" hidden>Available offline</span>
+          ${book.id === "english" ? `<span class="current-week-tag">Week ${currentStudy.week} · Page ${currentStudy.page}</span>` : ""}
         </a>
         <div class="book-details">
           <div class="book-kicker"><span>${book.language}</span><span>${book.pages} pages</span></div>
           <h3>${book.shortTitle}</h3><p>${book.description}</p>
           <div class="book-actions">
-            <a class="button button-primary" href="./reader.html?book=${encodeURIComponent(book.id)}">Read manual</a>
+            <a class="button button-primary" href="${bookHref(book)}">${book.id === "english" ? "Open this week" : "Read manual"}</a>
             <button class="button button-secondary download-button" data-download="${book.id}" type="button">Save offline</button>
           </div>
           <small class="download-meta">${book.size} · Progress and bookmarks stay on this device</small>
@@ -97,10 +108,10 @@
   function renderContinueReading() {
     const progress = JSON.parse(localStorage.getItem("tacef-progress") || "{}");
     const recent = Object.entries(progress).sort((a, b) => (b[1].updated || 0) - (a[1].updated || 0))[0];
-    if (!recent) return;
-    const book = books.find((item) => item.id === recent[0]);
-    if (!book) return;
     const panel = document.getElementById("continuePanel");
+    if (!recent) { panel.classList.add("hidden"); return; }
+    const book = books.find((item) => item.id === recent[0]);
+    if (!book) { panel.classList.add("hidden"); return; }
     document.getElementById("continueTitle").textContent = book.shortTitle;
     document.getElementById("continueMeta").textContent = `Continue from page ${recent[1].page || 1} of ${book.pages}`;
     document.getElementById("continueLink").href = `./reader.html?book=${encodeURIComponent(book.id)}&page=${recent[1].page || 1}`;
@@ -180,6 +191,7 @@
   window.addEventListener("appinstalled", () => { deferredInstallPrompt = null; showToast("TACEF Books has been installed."); installDialog.close(); });
   window.addEventListener("online", updateNetworkStatus);
   window.addEventListener("offline", updateNetworkStatus);
+  window.addEventListener("tacef:cloud-state-loaded", renderContinueReading);
   installButtons.forEach((button) => button.addEventListener("click", showInstallDialog));
   document.getElementById("dialogInstallButton").addEventListener("click", async () => { if (!deferredInstallPrompt) return; await deferredInstallPrompt.prompt(); deferredInstallPrompt = null; });
   document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => button.closest("dialog").close()));
@@ -188,6 +200,7 @@
   document.getElementById("searchInput").addEventListener("input", (event) => { clearTimeout(searchTimer); searchTimer = setTimeout(() => searchLibrary(event.target.value), 450); });
 
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+  renderCurrentStudy();
   updateNetworkStatus();
   renderBooks();
   renderContinueReading();
