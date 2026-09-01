@@ -1156,12 +1156,12 @@ body::after {
   filter: blur(1px);
   animation: sky-drift 26s ease-in-out infinite alternate;
 }
-.site-header,
-.site-footer,
-.welcome-overlay,
-.reader-header,
-.mobile-page-bar,
-.toast { z-index: 1; }
+.site-header { z-index: 100; }
+.site-footer { z-index: 1; }
+.welcome-overlay { z-index: 600; }
+.reader-header { z-index: 20; }
+.mobile-page-bar { z-index: 30; }
+.toast { z-index: 500; }
 body > main { position: relative; z-index: 1; }
 
 body[data-time-theme="morning"] {
