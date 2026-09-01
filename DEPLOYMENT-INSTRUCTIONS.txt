@@ -19,7 +19,10 @@ week, current page, week list, saved places, A-/A/A+ sizing and fullscreen.
 Nothing floats over the manual text. The header and bottom controls fade after
 8 seconds on computers and phones, with top-edge or tap reveal, remembered text
 sizing and fullscreen mode.
-The spiritual sky theme changes automatically for morning, afternoon and night.
+The spiritual sky theme changes automatically using the reader's local time:
+sunrise and warm light from 5am, a calm blue daytime sky from noon, and a deep
+blue moonlit atmosphere from 6pm. Lightweight rays, clouds, stars and restrained
+cross geometry reinforce the Christian identity without distracting from text.
 
 PUBLISH ON GITHUB PAGES
 -----------------------

@@ -1456,3 +1456,166 @@ body[data-time-theme="night"] .hero {
   .gesture-guide { bottom: calc(105px + env(safe-area-inset-bottom)); }
   .reading-progress { bottom: calc(71px + env(safe-area-inset-bottom)); }
 }
+
+/* Living spiritual sky — lightweight, local-time atmosphere */
+.spiritual-sky {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 1.2s ease, background 1.6s ease;
+}
+.spiritual-sky > span {
+  position: absolute;
+  display: block;
+  transition: opacity 1.4s ease, transform 1.6s ease, background 1.6s ease;
+}
+.sky-glow {
+  width: min(58vw, 760px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(2px);
+  animation: sacred-glow 8s ease-in-out infinite alternate;
+}
+.sky-rays {
+  width: min(92vw, 1100px);
+  height: 78vh;
+  opacity: .24;
+  background: repeating-conic-gradient(from 205deg at 50% 0%, rgba(255, 232, 168, .23) 0deg 4deg, transparent 4deg 13deg);
+  filter: blur(2px);
+  transform-origin: 50% 0;
+  animation: sacred-rays 22s ease-in-out infinite alternate;
+}
+.sky-cloud {
+  width: clamp(190px, 25vw, 390px);
+  height: clamp(48px, 7vw, 96px);
+  border-radius: 50%;
+  filter: blur(6px);
+  opacity: .16;
+  animation: cloud-pilgrimage 34s ease-in-out infinite alternate;
+}
+.sky-cloud::before,
+.sky-cloud::after {
+  content: "";
+  position: absolute;
+  bottom: 4%;
+  border-radius: 50%;
+  background: inherit;
+}
+.sky-cloud::before { left: 12%; width: 42%; height: 150%; }
+.sky-cloud::after { right: 10%; width: 50%; height: 190%; }
+.sky-cloud-two { animation-duration: 43s; animation-direction: alternate-reverse; }
+.sky-stars {
+  inset: 0;
+  opacity: 0;
+  background-image:
+    radial-gradient(circle at 8% 18%, rgba(255,255,255,.92) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 23% 8%, rgba(255,244,198,.74) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 41% 24%, rgba(255,255,255,.8) 0 1px, transparent 1.8px),
+    radial-gradient(circle at 61% 11%, rgba(255,255,255,.9) 0 1px, transparent 1.9px),
+    radial-gradient(circle at 78% 29%, rgba(255,244,198,.72) 0 1px, transparent 1.7px),
+    radial-gradient(circle at 94% 12%, rgba(255,255,255,.86) 0 1px, transparent 1.9px);
+  background-size: 280px 190px, 340px 245px, 315px 220px, 380px 255px, 295px 210px, 360px 235px;
+  animation: holy-stars 5.2s ease-in-out infinite alternate;
+}
+.sky-cross {
+  width: 2px;
+  height: clamp(82px, 10vw, 138px);
+  opacity: .08;
+  background: linear-gradient(180deg, transparent, rgba(255, 232, 166, .92) 24% 78%, transparent);
+  filter: drop-shadow(0 0 16px rgba(255, 220, 135, .34));
+}
+.sky-cross::after {
+  content: "";
+  position: absolute;
+  top: 28%;
+  left: 50%;
+  width: clamp(58px, 7vw, 96px);
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 232, 166, .92) 22% 78%, transparent);
+  transform: translateX(-50%);
+}
+
+body[data-time-theme="morning"] .sky-glow {
+  top: -18vw;
+  left: -8vw;
+  background: radial-gradient(circle, rgba(255, 241, 187, .62) 0 7%, rgba(255, 195, 86, .25) 23%, transparent 65%);
+}
+body[data-time-theme="morning"] .sky-rays { top: 2vh; left: -28vw; }
+body[data-time-theme="morning"] .sky-cloud { background: rgba(249, 245, 227, .8); }
+body[data-time-theme="morning"] .sky-cloud-one { top: 15vh; left: 18vw; }
+body[data-time-theme="morning"] .sky-cloud-two { top: 34vh; right: 7vw; opacity: .11; }
+body[data-time-theme="morning"] .sky-cross { top: 17vh; right: 10vw; }
+
+body[data-time-theme="afternoon"] .sky-glow {
+  top: -24vw;
+  right: -10vw;
+  background: radial-gradient(circle, rgba(255, 248, 205, .55) 0 6%, rgba(255, 220, 129, .2) 22%, transparent 62%);
+}
+body[data-time-theme="afternoon"] .sky-rays { top: -7vh; right: -30vw; transform: rotate(16deg); opacity: .17; }
+body[data-time-theme="afternoon"] .sky-cloud { background: rgba(236, 245, 255, .82); }
+body[data-time-theme="afternoon"] .sky-cloud-one { top: 18vh; left: 6vw; opacity: .14; }
+body[data-time-theme="afternoon"] .sky-cloud-two { top: 40vh; right: 22vw; opacity: .1; }
+body[data-time-theme="afternoon"] .sky-cross { top: 18vh; right: 12vw; opacity: .07; }
+
+body[data-time-theme="night"] .sky-glow {
+  top: -14vw;
+  right: -6vw;
+  background: radial-gradient(circle, rgba(231, 237, 255, .48) 0 5%, rgba(123, 145, 255, .14) 20%, transparent 60%);
+}
+body[data-time-theme="night"] .sky-rays,
+body[data-time-theme="night"] .sky-cloud { opacity: 0; }
+body[data-time-theme="night"] .sky-stars { opacity: .66; }
+body[data-time-theme="night"] .sky-cross { top: 19vh; right: 11vw; opacity: .1; }
+
+.spiritual-caption {
+  width: fit-content;
+  margin-top: 13px;
+  padding: 7px 11px;
+  display: inline-flex;
+  align-items: center;
+  color: #f3e4b2;
+  background: rgba(5, 10, 50, .27);
+  border: 1px solid rgba(242, 213, 130, .22);
+  border-radius: 999px;
+  font-size: .66rem;
+  font-weight: 760;
+  letter-spacing: .025em;
+  backdrop-filter: blur(10px);
+}
+.spiritual-caption::before {
+  content: "✦";
+  margin-right: 7px;
+  color: #f2ce72;
+  font-size: .72rem;
+}
+.reader-body .spiritual-sky { opacity: .46; }
+
+@keyframes sacred-glow {
+  from { opacity: .78; transform: scale(.98); }
+  to { opacity: 1; transform: scale(1.04); }
+}
+@keyframes sacred-rays {
+  from { opacity: .14; transform: rotate(-2deg) scale(.98); }
+  to { opacity: .27; transform: rotate(3deg) scale(1.04); }
+}
+@keyframes cloud-pilgrimage {
+  from { transform: translate3d(-2vw, 0, 0); }
+  to { transform: translate3d(5vw, 1vh, 0); }
+}
+@keyframes holy-stars {
+  from { filter: brightness(.82); }
+  to { filter: brightness(1.18); }
+}
+
+@media (max-width: 700px) {
+  .spiritual-caption { margin-top: 10px; font-size: .6rem; }
+  .sky-cross { right: 7vw !important; opacity: .065 !important; }
+  .sky-cloud-two { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spiritual-sky > span { animation: none !important; }
+}
