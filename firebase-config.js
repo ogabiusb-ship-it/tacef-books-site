@@ -1,5 +1,5 @@
 window.TACEF_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyB6tVH5h0xkK2DzvFwipx1VN2ZDJbZDiYQ",
+  apiKey: "AIzaSyB6tVH5hOxkK2DzvFwipx1VN2ZDJbZDiYQ",
   authDomain: "tacef-books.firebaseapp.com",
   projectId: "tacef-books",
   storageBucket: "tacef-books.firebasestorage.app",
