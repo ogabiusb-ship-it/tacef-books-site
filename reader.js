@@ -13,6 +13,9 @@ const toast = document.getElementById("toast");
 const stage = document.querySelector(".pdf-stage");
 const canvasWrap = document.getElementById("pdfCanvasWrap");
 const canvas = document.getElementById("pdfCanvas");
+const bookLeaf = document.getElementById("bookLeaf");
+const gestureGuide = document.getElementById("gestureGuide");
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const loading = document.getElementById("readerLoading");
 const loadingText = document.getElementById("readerLoadingText");
 const errorPanel = document.getElementById("readerError");
@@ -23,6 +26,9 @@ let renderTask = null;
 let renderSequence = 0;
 let totalPages = book.pages;
 let page = Math.min(totalPages, Math.max(1, Number(params.get("page")) || getSavedPage()));
+let isTurning = false;
+let wheelDistance = 0;
+let wheelResetTimer = null;
 
 const absolute = (path) => new URL(path, window.location.href).href;
 
@@ -64,25 +70,27 @@ function saveProgress() {
   const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
   progress[book.id] = { page, updated: Date.now() };
   localStorage.setItem(progressKey, JSON.stringify(progress));
-  window.dispatchEvent(new CustomEvent("tacef:local-state-changed"));
 }
 
 function updatePageControls() {
+  const progress = Math.max(0, Math.min(100, (page / totalPages) * 100));
   pageInput.value = page;
   pageInput.max = totalPages;
   document.getElementById("pageTotal").textContent = `of ${totalPages}`;
   document.getElementById("mobilePageNumber").textContent = page;
+  document.getElementById("readingProgressBar").style.width = `${progress}%`;
+  document.getElementById("readingProgressText").textContent = `Page ${page} · ${Math.round(progress)}%`;
   document.getElementById("prevPage").disabled = page <= 1;
   document.getElementById("mobilePrevPage").disabled = page <= 1;
   document.getElementById("nextPage").disabled = page >= totalPages;
   document.getElementById("mobileNextPage").disabled = page >= totalPages;
 }
 
-async function renderPage() {
+async function renderPage({ quiet = false } = {}) {
   if (!pdfDocument) return;
   const sequence = ++renderSequence;
   if (renderTask) renderTask.cancel();
-  setLoading(`Opening page ${page}…`);
+  if (!quiet) setLoading(`Opening page ${page}…`);
 
   try {
     const pdfPage = await pdfDocument.getPage(page);
@@ -143,15 +151,102 @@ async function loadDocument() {
   }
 }
 
-function openPage(nextPage, announce = false) {
-  page = Math.min(totalPages, Math.max(1, Number(nextPage) || 1));
+function commitPageChange(nextPage, announce) {
+  page = nextPage;
   updatePageControls();
   saveProgress();
   updateBookmarkButton();
   history.replaceState(null, "", `?book=${encodeURIComponent(book.id)}&page=${page}`);
-  if (pdfDocument) renderPage();
   if (announce) showToast(`Page ${page}`);
 }
+
+const wait = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+
+async function turnPage(nextPage, announce, direction) {
+  if (isTurning) return;
+  isTurning = true;
+  const outClass = direction === "forward" ? "turn-forward-out" : "turn-backward-out";
+  const inClass = direction === "forward" ? "turn-forward-in" : "turn-backward-in";
+
+  try {
+    bookLeaf.classList.add(outClass);
+    await wait(190);
+    commitPageChange(nextPage, announce);
+    await renderPage({ quiet: true });
+    bookLeaf.classList.remove(outClass);
+    bookLeaf.classList.add(inClass);
+    await wait(330);
+  } finally {
+    bookLeaf.classList.remove(outClass, inClass);
+    isTurning = false;
+  }
+}
+
+function openPage(nextPage, announce = false) {
+  const targetPage = Math.min(totalPages, Math.max(1, Number(nextPage) || 1));
+  if (targetPage === page) {
+    commitPageChange(targetPage, announce);
+    return;
+  }
+
+  const direction = targetPage > page ? "forward" : "backward";
+  if (pdfDocument && !reducedMotion.matches) {
+    turnPage(targetPage, announce, direction);
+    return;
+  }
+
+  commitPageChange(targetPage, announce);
+  if (pdfDocument) renderPage();
+}
+
+function dismissGestureGuide() {
+  gestureGuide.classList.add("used");
+}
+
+let touchStart = null;
+stage.addEventListener("touchstart", (event) => {
+  if (event.touches.length !== 1 || document.querySelector("dialog[open]")) return;
+  const touch = event.touches[0];
+  touchStart = { x: touch.clientX, y: touch.clientY, at: Date.now() };
+}, { passive: true });
+
+stage.addEventListener("touchend", (event) => {
+  if (!touchStart || event.changedTouches.length !== 1 || isTurning) { touchStart = null; return; }
+  const touch = event.changedTouches[0];
+  const distanceX = touch.clientX - touchStart.x;
+  const distanceY = touch.clientY - touchStart.y;
+  const elapsed = Date.now() - touchStart.at;
+  touchStart = null;
+
+  if (elapsed > 900 || Math.abs(distanceX) < 58 || Math.abs(distanceX) < Math.abs(distanceY) * 1.25) return;
+  dismissGestureGuide();
+  openPage(page + (distanceX < 0 ? 1 : -1), true);
+}, { passive: true });
+
+stage.addEventListener("wheel", (event) => {
+  if (event.ctrlKey || isTurning || document.querySelector("dialog[open]") || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+  const atTop = stage.scrollTop <= 2;
+  const atBottom = stage.scrollTop + stage.clientHeight >= stage.scrollHeight - 2;
+  const canTurnForward = event.deltaY > 0 && atBottom && page < totalPages;
+  const canTurnBackward = event.deltaY < 0 && atTop && page > 1;
+
+  if (!canTurnForward && !canTurnBackward) {
+    wheelDistance = 0;
+    return;
+  }
+
+  event.preventDefault();
+  wheelDistance += event.deltaY;
+  clearTimeout(wheelResetTimer);
+  wheelResetTimer = window.setTimeout(() => { wheelDistance = 0; }, 260);
+
+  if (Math.abs(wheelDistance) >= 120) {
+    const direction = wheelDistance > 0 ? 1 : -1;
+    wheelDistance = 0;
+    dismissGestureGuide();
+    openPage(page + direction, true);
+  }
+}, { passive: false });
 
 function getBookmarks() {
   const all = JSON.parse(localStorage.getItem(bookmarksKey) || "{}");
@@ -162,7 +257,6 @@ function setBookmarks(pages) {
   const all = JSON.parse(localStorage.getItem(bookmarksKey) || "{}");
   all[book.id] = [...new Set(pages)].sort((a, b) => a - b);
   localStorage.setItem(bookmarksKey, JSON.stringify(all));
-  window.dispatchEvent(new CustomEvent("tacef:local-state-changed"));
 }
 
 function updateBookmarkButton() {
@@ -266,6 +360,7 @@ async function searchBook(query) {
 document.title = `${book.shortTitle} · TACEF Books`;
 document.getElementById("readerBookTitle").textContent = book.shortTitle;
 document.getElementById("readerBookMeta").textContent = `${book.language} · ${book.pages} pages`;
+document.getElementById("storyMarkerTitle").textContent = book.shortTitle;
 document.getElementById("originalPdfLink").href = book.file;
 document.getElementById("errorPdfLink").href = book.file;
 updatePageControls();
@@ -288,11 +383,12 @@ document.getElementById("readerSearchForm").addEventListener("submit", (event) =
 document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => button.closest("dialog").close()));
 window.addEventListener("online", updateNetworkStatus);
 window.addEventListener("offline", updateNetworkStatus);
-window.addEventListener("tacef:cloud-state-loaded", () => updateBookmarkButton());
 window.addEventListener("keydown", (event) => {
   if (event.target.matches("input") || document.querySelector("dialog[open]")) return;
   if (event.key === "ArrowLeft") openPage(page - 1);
   if (event.key === "ArrowRight") openPage(page + 1);
+  if (event.key === "PageUp") openPage(page - 1);
+  if (event.key === "PageDown") openPage(page + 1);
 });
 
 let resizeTimer;

@@ -44,10 +44,11 @@
   }
 
   async function renderBooks() {
-    grid.innerHTML = books.map((book) => `
+    grid.innerHTML = books.map((book, index) => `
       <article class="book-card accent-${book.accent}" data-book-id="${book.id}">
         <a class="book-cover" href="${bookHref(book)}" aria-label="Read ${book.title}">
           <img src="${book.cover}" alt="Cover of ${book.title}" loading="lazy" />
+          <span class="volume-index">Volume ${String(index + 1).padStart(2, "0")}</span>
           <span class="offline-tag" hidden>Available offline</span>
           ${book.id === "english" ? `<span class="current-week-tag">Week ${currentStudy.week} · Page ${currentStudy.page}</span>` : ""}
         </a>
@@ -191,7 +192,6 @@
   window.addEventListener("appinstalled", () => { deferredInstallPrompt = null; showToast("TACEF Books has been installed."); installDialog.close(); });
   window.addEventListener("online", updateNetworkStatus);
   window.addEventListener("offline", updateNetworkStatus);
-  window.addEventListener("tacef:cloud-state-loaded", renderContinueReading);
   installButtons.forEach((button) => button.addEventListener("click", showInstallDialog));
   document.getElementById("dialogInstallButton").addEventListener("click", async () => { if (!deferredInstallPrompt) return; await deferredInstallPrompt.prompt(); deferredInstallPrompt = null; });
   document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => button.closest("dialog").close()));

@@ -5,9 +5,12 @@ WHAT THIS UPDATED PACKAGE CONTAINS
 --------------------------
 This is the complete ready-to-host TACEF Books website. It contains the
 English Manual, Yoruba Manual, Seed of Purpose Manual, automatic current-week
-opening, optional Google sign-in, offline installation, search, bookmarks and
-reading-progress features. This version also includes the mobile-safe in-app
-manual reader and the refined navy-and-red TACEF design.
+opening, offline installation, search, bookmarks and local reading-progress
+features. No account or external service is required. This version also
+includes the mobile-safe in-app manual reader and the refined navy-and-red
+TACEF design. The Living Book reader supports horizontal page swipes on phones,
+edge-aware mouse-wheel page turns on computers, keyboard navigation and an
+animated paper page-turn effect.
 
 PUBLISH ON GITHUB PAGES
 -----------------------
@@ -17,37 +20,12 @@ PUBLISH ON GITHUB PAGES
 3. Copy every item INSIDE the extracted package into the repository folder.
    Choose Replace the files in the destination when Windows asks. Do not copy
    the ZIP itself, and do not delete the hidden .git folder.
-4. Return to GitHub Desktop. Use the summary "Fix manual reader and update
-   TACEF theme", then choose Commit to main and Push origin.
+4. Return to GitHub Desktop. Use the summary "Simplify local offline app", then
+   choose Commit to main and Push origin.
 5. In GitHub, open Settings > Pages.
 6. Under Build and deployment, choose Deploy from a branch.
 7. Select the main branch and /(root), then Save.
 8. Wait a few minutes and open the Pages address supplied by GitHub.
-
-FINISH FIREBASE SETUP
----------------------
-1. Firebase Console > Authentication > Settings > Authorized domains:
-   add ogabiusb-ship-it.github.io
-2. Firebase Console > Firestore Database > Create database. Production mode is
-   recommended; select the closest available location.
-3. Open Firestore Database > Rules, replace the editor with the contents of
-   firestore.rules from this package, then choose Publish.
-
-Google sign-in is optional. The manuals continue to work without an account.
-When signed in, reading progress and bookmarks synchronise between devices.
-
-OPTIONAL: HOST THE WHOLE APP ON FIREBASE
------------------------------------------
-The package also includes firebase.json and is ready for Firebase Hosting.
-From a terminal opened inside this extracted folder, run:
-
-  npm install -g firebase-tools
-  firebase login
-  firebase deploy --only hosting,firestore:rules
-
-Firebase will show the new site address after deployment. If you host there,
-the default *.web.app and *.firebaseapp.com domains are already recognised by
-Firebase Authentication.
 
 INSTALL ON A DEVICE
 -------------------
@@ -67,5 +45,5 @@ then remain available on that device without internet access.
 IMPORTANT
 ---------
 Offline PDF downloads are stored separately on each device. Progress and
-bookmarks stay on the device and also synchronise through Firebase when the
-reader chooses to sign in.
+bookmarks are saved only on that device. Clearing the browser's site data will
+remove its saved progress, bookmarks and offline downloads.
