@@ -1,8 +1,8 @@
-const VERSION = "16";
+const VERSION = "17";
 const APP_CACHE = `tacef-app-v${VERSION}`;
 const MANUAL_CACHE = "tacef-manuals-v1";
 const APP_SHELL = [
-  "./", "./index.html", "./reader.html", "./offline.html", "./styles.css", "./theme.js", "./catalog.js", "./study-schedule.js", "./app.js", "./reader.js",
+  "./", "./index.html", "./reader.html", "./offline.html", "./styles.css", "./professional.css", "./theme.js", "./catalog.js", "./study-schedule.js", "./app.js", "./reader.js",
   "./manifest.webmanifest", "./tacef-favicon.png", "./tacef-banner-logo.png", "./icons/icon-192.png", "./icons/icon-512.png",
   "./vendor/pdfjs/pdf.min.mjs", "./vendor/pdfjs/pdf.worker.min.mjs", "./vendor/pdfjs/LICENSE",
   "./covers/english.jpg", "./covers/yoruba.jpg", "./covers/seed-of-purpose.jpg"

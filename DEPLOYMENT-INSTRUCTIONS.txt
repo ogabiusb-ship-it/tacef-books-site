@@ -25,6 +25,10 @@ blue moonlit atmosphere from 6pm. Lightweight rays, clouds, stars and restrained
 cross geometry reinforce the Christian identity without distracting from text.
 The manual reader itself uses a consistent dark navy surround in the afternoon
 so no bright blue strip appears when its distraction-free header is hidden.
+The professional release layer also reserves dedicated space for the top header
+and bottom reading controls, preventing them from covering manual text. Library
+anchors clear the sticky header, returning readers are not repeatedly interrupted
+by the welcome book, and page selection uses an accessible in-app dialog.
 
 PUBLISH ON GITHUB PAGES
 -----------------------

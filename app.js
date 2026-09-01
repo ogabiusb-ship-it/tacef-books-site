@@ -6,6 +6,7 @@
   const nextStudy = schedule?.getNextStudy(today, "english") || null;
   const manualCacheName = "tacef-manuals-v1";
   const readerNameKey = "tacef-reader-name";
+  const welcomeSeenKey = "tacef-welcome-seen";
   const grid = document.getElementById("bookGrid");
   const toast = document.getElementById("toast");
   const installDialog = document.getElementById("installDialog");
@@ -99,6 +100,7 @@
   }
 
   function closeWelcome() {
+    localStorage.setItem(welcomeSeenKey, "1");
     welcomeOverlay.classList.remove("visible");
     document.body.classList.remove("welcome-open");
     window.setTimeout(() => { welcomeOverlay.hidden = true; }, 360);
@@ -218,9 +220,13 @@
     const name = cleanReaderName(document.getElementById("readerName").value);
     if (!name) return;
     localStorage.setItem(readerNameKey, name);
+    localStorage.setItem(welcomeSeenKey, "1");
     showManualStep(name);
   });
-  document.getElementById("continueAsGuest").addEventListener("click", () => showManualStep("Reader"));
+  document.getElementById("continueAsGuest").addEventListener("click", () => {
+    localStorage.setItem(welcomeSeenKey, "1");
+    showManualStep("Reader");
+  });
   document.getElementById("profileButton").addEventListener("click", () => openWelcome(true));
   document.getElementById("welcomeCloseButton").addEventListener("click", closeWelcome);
   document.getElementById("browseLibraryButton").addEventListener("click", () => { closeWelcome(); document.getElementById("library").scrollIntoView({ behavior: "smooth" }); });
@@ -234,5 +240,6 @@
   updateNetworkStatus();
   renderBooks();
   renderContinueReading();
-  window.setTimeout(() => openWelcome(false), 260);
+  const returningReader = Boolean(cleanReaderName(localStorage.getItem(readerNameKey))) || localStorage.getItem(welcomeSeenKey) === "1";
+  if (!returningReader) window.setTimeout(() => openWelcome(false), 260);
 })();

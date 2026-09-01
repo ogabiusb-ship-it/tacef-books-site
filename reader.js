@@ -292,8 +292,28 @@ async function toggleFullscreen() {
 }
 
 function requestPage() {
-  const requestedPage = window.prompt(`Go to page (1–${totalPages})`, String(page));
-  if (requestedPage !== null) openPage(requestedPage, true);
+  const dialog = document.getElementById("pageDialog");
+  const input = document.getElementById("pageJumpInput");
+  input.min = "1";
+  input.max = String(totalPages);
+  input.value = String(page);
+  document.getElementById("pageJumpHelp").textContent = `Choose a page from 1 to ${totalPages}.`;
+  dialog.showModal();
+  window.setTimeout(() => { input.focus(); input.select(); }, 60);
+}
+
+function submitPageRequest(event) {
+  event.preventDefault();
+  const input = document.getElementById("pageJumpInput");
+  const requestedPage = Number(input.value);
+  if (!Number.isInteger(requestedPage) || requestedPage < 1 || requestedPage > totalPages) {
+    input.setCustomValidity(`Enter a page from 1 to ${totalPages}.`);
+    input.reportValidity();
+    return;
+  }
+  input.setCustomValidity("");
+  document.getElementById("pageDialog").close();
+  openPage(requestedPage, true);
 }
 
 function dismissGestureGuide() {
@@ -470,6 +490,7 @@ updatePageControls();
 document.getElementById("prevPage").addEventListener("click", () => openPage(page - 1));
 document.getElementById("nextPage").addEventListener("click", () => openPage(page + 1));
 document.getElementById("pagePositionButton").addEventListener("click", requestPage);
+document.getElementById("pageJumpForm").addEventListener("submit", submitPageRequest);
 document.getElementById("bookmarkButton").addEventListener("click", toggleBookmark);
 document.getElementById("bookmarksButton").addEventListener("click", showBookmarks);
 document.getElementById("weeksButton").addEventListener("click", showWeeks);
