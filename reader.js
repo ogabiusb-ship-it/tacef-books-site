@@ -13,12 +13,9 @@ const manualCacheName = "tacef-manuals-v1";
 const progressKey = "tacef-progress";
 const bookmarksKey = "tacef-bookmarks";
 const zoomKey = "tacef-reading-zoom";
-const toolbarPositionKey = "tacef-reader-toolbar-position";
 const zoomLevels = [0.82, 1, 1.24, 1.48];
 const toast = document.getElementById("toast");
 const stage = document.querySelector(".pdf-stage");
-const readerToolDock = document.getElementById("readerToolDock");
-const toolbarDragHandle = document.getElementById("toolbarDragHandle");
 const canvasWrap = document.getElementById("pdfCanvasWrap");
 const canvas = document.getElementById("pdfCanvas");
 const bookLeaf = document.getElementById("bookLeaf");
@@ -39,8 +36,6 @@ let wheelDistance = 0;
 let wheelResetTimer = null;
 let readingZoom = Number(localStorage.getItem(zoomKey)) || 1;
 let chromeTimer = null;
-let toolbarDragState = null;
-let isDraggingToolbar = false;
 
 readingZoom = zoomLevels.reduce((closest, value) => Math.abs(value - readingZoom) < Math.abs(closest - readingZoom) ? value : closest, 1);
 
@@ -273,7 +268,7 @@ function hideReaderChrome() {
   const focusedControl = document.activeElement?.closest?.(".reader-header, .reader-tool-dock, dialog");
   const keyboardFocus = focusedControl && document.activeElement.matches?.(":focus-visible");
   const hoveredControls = document.querySelector(".reader-header:hover, .reader-tool-dock:hover");
-  if (document.querySelector("dialog[open]") || keyboardFocus || hoveredControls || isTurning || isDraggingToolbar) { scheduleChromeHide(); return; }
+  if (document.querySelector("dialog[open]") || keyboardFocus || hoveredControls || isTurning) { scheduleChromeHide(); return; }
   document.body.classList.add("reader-chrome-hidden");
 }
 
@@ -300,68 +295,6 @@ function requestPage() {
   const requestedPage = window.prompt(`Go to page (1–${totalPages})`, String(page));
   if (requestedPage !== null) openPage(requestedPage, true);
 }
-
-function keepToolbarOnScreen(left, top) {
-  const rect = readerToolDock.getBoundingClientRect();
-  return {
-    left: Math.max(8, Math.min(left, window.innerWidth - rect.width - 8)),
-    top: Math.max(8, Math.min(top, window.innerHeight - rect.height - 8))
-  };
-}
-
-function placeToolbar(left, top, remember = true) {
-  const position = keepToolbarOnScreen(left, top);
-  readerToolDock.classList.add("detached");
-  readerToolDock.style.left = `${position.left}px`;
-  readerToolDock.style.top = `${position.top}px`;
-  if (remember) localStorage.setItem(toolbarPositionKey, JSON.stringify(position));
-}
-
-function resetToolbarPosition() {
-  readerToolDock.classList.remove("detached");
-  readerToolDock.style.removeProperty("left");
-  readerToolDock.style.removeProperty("top");
-  localStorage.removeItem(toolbarPositionKey);
-  showReaderChrome();
-}
-
-function restoreToolbarPosition() {
-  if (window.innerWidth <= 700) { resetToolbarPosition(); return; }
-  try {
-    const position = JSON.parse(localStorage.getItem(toolbarPositionKey) || "null");
-    if (Number.isFinite(position?.left) && Number.isFinite(position?.top)) placeToolbar(position.left, position.top, false);
-  } catch (_) { localStorage.removeItem(toolbarPositionKey); }
-}
-
-toolbarDragHandle.addEventListener("pointerdown", (event) => {
-  if (window.innerWidth <= 700 || event.button !== 0) return;
-  const rect = readerToolDock.getBoundingClientRect();
-  toolbarDragState = { offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top };
-  isDraggingToolbar = true;
-  readerToolDock.classList.add("dragging");
-  placeToolbar(rect.left, rect.top, false);
-  toolbarDragHandle.setPointerCapture?.(event.pointerId);
-  event.preventDefault();
-  showReaderChrome();
-});
-
-toolbarDragHandle.addEventListener("pointermove", (event) => {
-  if (!toolbarDragState) return;
-  placeToolbar(event.clientX - toolbarDragState.offsetX, event.clientY - toolbarDragState.offsetY, false);
-});
-
-toolbarDragHandle.addEventListener("pointerup", (event) => {
-  if (!toolbarDragState) return;
-  toolbarDragHandle.releasePointerCapture?.(event.pointerId);
-  const rect = readerToolDock.getBoundingClientRect();
-  toolbarDragState = null;
-  isDraggingToolbar = false;
-  readerToolDock.classList.remove("dragging");
-  placeToolbar(rect.left, rect.top, true);
-  scheduleChromeHide();
-});
-
-toolbarDragHandle.addEventListener("dblclick", resetToolbarPosition);
 
 function dismissGestureGuide() {
   gestureGuide.classList.add("used");
@@ -579,14 +512,7 @@ document.addEventListener("fullscreenchange", () => {
 let resizeTimer;
 window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    if (readerToolDock.classList.contains("detached")) {
-      const rect = readerToolDock.getBoundingClientRect();
-      if (window.innerWidth <= 700) resetToolbarPosition();
-      else placeToolbar(rect.left, rect.top, true);
-    }
-    if (pdfDocument) renderPage();
-  }, 220);
+  resizeTimer = setTimeout(() => { if (pdfDocument) renderPage(); }, 220);
 });
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(() => {});
@@ -595,5 +521,4 @@ updateOfflineButton();
 openPage(page);
 loadDocument();
 if (!document.documentElement.requestFullscreen) document.getElementById("fullscreenButton").hidden = true;
-restoreToolbarPosition();
 showReaderChrome();

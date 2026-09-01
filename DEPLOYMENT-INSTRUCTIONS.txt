@@ -13,11 +13,12 @@ device and then presents all three manuals. Every manual opens at its verified
 page for the current week, while the home page previews the following week's
 lesson. The Living Book reader includes horizontal phone swipes, edge-aware
 mouse-wheel page turns, keyboard navigation, week navigation and animated page
-turns. The reader has no sidebar: its current week, page position, saved places,
-zoom and fullscreen controls are consolidated in the header. On computers, the
-control bar can be dragged anywhere and double-clicked on its grip to reset it.
-The header and controls fade after 8 seconds on computers and phones, with
-top-edge or tap reveal, remembered A-/A/A+ sizing and fullscreen mode.
+turns. The reader has no sidebar. A slim, calm header keeps the manual title and
+essential actions clear, while a fixed bottom control bar holds the current
+week, current page, week list, saved places, A-/A/A+ sizing and fullscreen.
+Nothing floats over the manual text. The header and bottom controls fade after
+8 seconds on computers and phones, with top-edge or tap reveal, remembered text
+sizing and fullscreen mode.
 The spiritual sky theme changes automatically for morning, afternoon and night.
 
 PUBLISH ON GITHUB PAGES
