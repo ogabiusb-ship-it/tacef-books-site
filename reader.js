@@ -9,7 +9,6 @@ const readerName = String(localStorage.getItem("tacef-reader-name") || "").trim(
 const currentStudy = window.TACEF_STUDY_SCHEDULE?.getCurrentStudy(new Date(), book.id);
 const weekPages = window.TACEF_STUDY_SCHEDULE?.manualPages?.[book.id] || [1];
 const weekTitles = window.TACEF_STUDY_SCHEDULE?.titles || [];
-const manualCacheName = "tacef-manuals-v1";
 const progressKey = "tacef-progress";
 const bookmarksKey = "tacef-bookmarks";
 const zoomKey = "tacef-reading-zoom";
@@ -39,8 +38,6 @@ let chromeTimer = null;
 
 readingZoom = zoomLevels.reduce((closest, value) => Math.abs(value - readingZoom) < Math.abs(closest - readingZoom) ? value : closest, 1);
 
-const absolute = (path) => new URL(path, window.location.href).href;
-
 function getSavedPage() {
   const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
   return progress[book.id]?.page || 1;
@@ -69,12 +66,6 @@ function showReaderError(error) {
   console.error("TACEF reader error", error);
 }
 
-function updateNetworkStatus() {
-  const status = document.getElementById("networkStatus");
-  status.classList.toggle("offline", !navigator.onLine);
-  status.querySelector("span").textContent = navigator.onLine ? "Online" : "Offline";
-}
-
 function saveProgress() {
   const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
   progress[book.id] = { page, updated: Date.now() };
@@ -94,8 +85,6 @@ function updateWeekControls() {
   const index = weekIndexForPage();
   const label = `Week ${index + 1}`;
   document.getElementById("weekMenuButton").textContent = label;
-  document.getElementById("previousWeekButton").disabled = index <= 0;
-  document.getElementById("nextWeekButton").disabled = index >= weekPages.length - 1;
   document.getElementById("storyMarkerTitle").textContent = `${label} · ${book.shortTitle}`;
 }
 
@@ -414,76 +403,10 @@ function showBookmarks() {
   document.getElementById("bookmarksDialog").showModal();
 }
 
-async function isCached() {
-  if (!("caches" in window)) return false;
-  return Boolean(await (await caches.open(manualCacheName)).match(absolute(book.file)));
-}
-
-async function updateOfflineButton() {
-  const button = document.getElementById("offlineButton");
-  const cached = await isCached();
-  button.textContent = cached ? "Saved offline" : "Save offline";
-  button.classList.toggle("is-saved", cached);
-}
-
-async function saveOffline() {
-  if (await isCached()) { showToast("This manual is already available offline."); return; }
-  if (!navigator.onLine) { showToast("Connect to the internet to download this manual."); return; }
-  const button = document.getElementById("offlineButton");
-  button.disabled = true;
-  button.textContent = "Saving…";
-  try {
-    if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
-    const cache = await caches.open(manualCacheName);
-    const [pdfResponse, indexResponse] = await Promise.all([fetch(book.file), fetch(book.index)]);
-    if (!pdfResponse.ok || !indexResponse.ok) throw new Error();
-    await Promise.all([cache.put(absolute(book.file), pdfResponse), cache.put(absolute(book.index), indexResponse)]);
-    showToast(`${book.shortTitle} is ready offline.`);
-  } catch (_) {
-    showToast("The manual could not be saved. Please try again.");
-  } finally {
-    button.disabled = false;
-    updateOfflineButton();
-  }
-}
-
-function normalise(value) { return value.toLocaleLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, ""); }
-function escapeHtml(value) { return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character]); }
-function snippet(text, query) {
-  const clean = text.replace(/\s+/g, " ").trim();
-  const at = normalise(clean).indexOf(normalise(query));
-  const start = Math.max(0, at - 80);
-  const end = Math.min(clean.length, Math.max(at + query.length + 100, 190));
-  return `${start ? "…" : ""}${clean.slice(start, end)}${end < clean.length ? "…" : ""}`;
-}
-
-async function searchBook(query) {
-  const status = document.getElementById("readerSearchStatus");
-  const results = document.getElementById("readerSearchResults");
-  if (query.trim().length < 2) { status.textContent = "Enter at least two characters."; results.innerHTML = ""; return; }
-  status.textContent = "Searching…";
-  results.innerHTML = '<div class="result-skeleton"></div>';
-  try {
-    const pages = await fetch(book.index).then((response) => { if (!response.ok) throw new Error(); return response.json(); });
-    const needle = normalise(query.trim());
-    const matches = pages.filter((item) => normalise(item.text).includes(needle)).slice(0, 40);
-    status.textContent = matches.length ? `${matches.length}${matches.length === 40 ? "+" : ""} matching pages` : `No pages found for “${query}”.`;
-    results.innerHTML = matches.map((item) => `<button class="search-result" type="button" data-result-page="${item.page}"><span class="result-book">Page ${item.page}</span><strong>${escapeHtml(snippet(item.text, query))}</strong><span class="result-arrow">→</span></button>`).join("");
-    results.querySelectorAll("[data-result-page]").forEach((button) => button.addEventListener("click", () => {
-      document.getElementById("searchDialog").close();
-      openPage(button.dataset.resultPage, true);
-    }));
-  } catch (_) {
-    status.textContent = navigator.onLine ? "Search is temporarily unavailable." : "Save this manual offline to search without internet.";
-    results.innerHTML = "";
-  }
-}
-
 document.title = `${book.shortTitle} · TACEF Books`;
 document.getElementById("readerBookTitle").textContent = book.shortTitle;
 document.getElementById("readerBookMeta").textContent = `${readerName ? `Welcome ${readerName} · ` : ""}${book.language} · ${book.pages} pages`;
 document.getElementById("storyMarkerTitle").textContent = currentStudy ? `Week ${currentStudy.week} · ${book.shortTitle}` : book.shortTitle;
-document.getElementById("originalPdfLink").href = book.file;
 document.getElementById("errorPdfLink").href = book.file;
 updatePageControls();
 
@@ -493,21 +416,13 @@ document.getElementById("pagePositionButton").addEventListener("click", requestP
 document.getElementById("pageJumpForm").addEventListener("submit", submitPageRequest);
 document.getElementById("bookmarkButton").addEventListener("click", toggleBookmark);
 document.getElementById("bookmarksButton").addEventListener("click", showBookmarks);
-document.getElementById("weeksButton").addEventListener("click", showWeeks);
 document.getElementById("weekMenuButton").addEventListener("click", showWeeks);
-document.getElementById("previousWeekButton").addEventListener("click", () => openPage(weekPages[Math.max(0, weekIndexForPage() - 1)], true));
-document.getElementById("nextWeekButton").addEventListener("click", () => openPage(weekPages[Math.min(weekPages.length - 1, weekIndexForPage() + 1)], true));
 document.getElementById("zoomOutButton").addEventListener("click", () => setReadingZoom(zoomLevels[Math.max(0, zoomLevels.indexOf(readingZoom) - 1)]));
 document.getElementById("zoomResetButton").addEventListener("click", () => setReadingZoom(1));
 document.getElementById("zoomInButton").addEventListener("click", () => setReadingZoom(zoomLevels[Math.min(zoomLevels.length - 1, zoomLevels.indexOf(readingZoom) + 1)]));
 document.getElementById("fullscreenButton").addEventListener("click", toggleFullscreen);
-document.getElementById("offlineButton").addEventListener("click", saveOffline);
 document.getElementById("retryReader").addEventListener("click", loadDocument);
-document.getElementById("readerSearchButton").addEventListener("click", () => document.getElementById("searchDialog").showModal());
-document.getElementById("readerSearchForm").addEventListener("submit", (event) => { event.preventDefault(); searchBook(document.getElementById("readerSearchInput").value); });
 document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => { button.closest("dialog").close(); showReaderChrome(); }));
-window.addEventListener("online", updateNetworkStatus);
-window.addEventListener("offline", updateNetworkStatus);
 window.addEventListener("keydown", (event) => {
   scheduleChromeHide();
   if (event.target.matches("input") || document.querySelector("dialog[open]")) return;
@@ -537,8 +452,6 @@ window.addEventListener("resize", () => {
 });
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(() => {});
-updateNetworkStatus();
-updateOfflineButton();
 openPage(page);
 loadDocument();
 if (!document.documentElement.requestFullscreen) document.getElementById("fullscreenButton").hidden = true;

@@ -3,7 +3,6 @@
   const schedule = window.TACEF_STUDY_SCHEDULE;
   const today = new Date();
   const currentStudy = schedule?.getCurrentStudy(today, "english") || { week: 1, page: 73, title: "Becoming a Trusted Soldier in the Lord’s Army", dates: "31 August – 6 September 2026" };
-  const nextStudy = schedule?.getNextStudy(today, "english") || null;
   const manualCacheName = "tacef-manuals-v1";
   const readerNameKey = "tacef-reader-name";
   const welcomeSeenKey = "tacef-welcome-seen";
@@ -15,7 +14,7 @@
   const nameStep = document.getElementById("nameStep");
   const homeBook = document.getElementById("homeBook");
   const homePages = [...homeBook.querySelectorAll(":scope > .home-book-page")];
-  const installButtons = [document.getElementById("installButton"), document.getElementById("heroInstallButton")].filter(Boolean);
+  const installButtons = [document.getElementById("installButton")].filter(Boolean);
   let deferredInstallPrompt = null;
   let homePageIndex = 0;
 
@@ -31,11 +30,6 @@
     document.getElementById("currentStudyDates").textContent = currentStudy.dates;
     document.getElementById("currentStudyNumber").textContent = String(currentStudy.week).padStart(2, "0");
     document.getElementById("currentStudyLink").href = `./reader.html?book=english&page=${currentStudy.page}`;
-    const preview = document.getElementById("nextStudyPreview");
-    if (!nextStudy) { preview.hidden = true; return; }
-    document.getElementById("nextStudyWeek").textContent = String(nextStudy.week).padStart(2, "0");
-    document.getElementById("nextStudyTitle").textContent = nextStudy.title;
-    document.getElementById("nextStudyDates").textContent = nextStudy.dates;
   }
 
   function showToast(message) {
@@ -148,12 +142,11 @@
         </a>
         <div class="book-details">
           <div class="book-kicker"><span>${book.language}</span><span>${book.pages} pages</span></div>
-          <h3>${book.shortTitle}</h3><p>${book.description}</p>
+          <h3>${book.shortTitle}</h3>
           <div class="book-actions">
             <a class="button button-primary" href="${bookHref(book)}">Open Week ${study.week}</a>
             <button class="button button-secondary download-button" data-download="${book.id}" type="button">Save offline</button>
           </div>
-          <small class="download-meta">${book.size} · Progress and bookmarks stay on this device</small>
         </div>
       </article>`;
     }).join("");
