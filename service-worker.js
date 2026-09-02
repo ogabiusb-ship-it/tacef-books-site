@@ -1,4 +1,4 @@
-const VERSION = "24";
+const VERSION = "25";
 const APP_CACHE = `tacef-app-v${VERSION}`;
 const MANUAL_CACHE = "tacef-manuals-v1";
 const APP_SHELL = [

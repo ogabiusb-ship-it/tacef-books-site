@@ -1340,3 +1340,254 @@ body:not(.reader-body)[data-time-theme="afternoon"] :is(.book-details p, .book-k
   .home-library-page .book-cover { height: 300px; min-height: 300px; }
   .home-library-page .book-details { min-height: 185px; padding: 18px; }
 }
+
+/* Release 17 — refined opening cover and balanced information hierarchy. */
+.home-intro-page {
+  padding: 20px 0 26px;
+}
+.home-intro-page .hero {
+  width: min(calc(100% - 40px), 1180px);
+  min-height: min(650px, calc(100dvh - 128px));
+  margin: 0 auto;
+  padding: clamp(42px, 6vh, 68px) clamp(34px, 5.2vw, 74px);
+  grid-template-columns: minmax(0, 1.35fr) minmax(285px, .65fr);
+  align-items: center;
+  gap: clamp(48px, 7vw, 92px);
+  border-radius: 34px;
+}
+.home-intro-page .hero-copy {
+  max-width: 650px;
+  align-self: center;
+}
+.home-intro-page .hero-rule {
+  width: 48px;
+  margin-bottom: 20px;
+}
+.home-intro-page .eyebrow {
+  color: #42548f;
+  font-size: .72rem;
+  letter-spacing: .12em;
+}
+.home-intro-page .spiritual-caption {
+  margin: 0 0 0 8px;
+  padding: 6px 10px;
+  color: #715718;
+  background: rgba(237, 211, 143, .22);
+  border-color: rgba(155, 119, 32, .22);
+}
+.home-intro-page .hero h1 {
+  max-width: 650px;
+  margin: 22px 0 20px;
+  font-size: clamp(2.45rem, 4vw, 3.85rem);
+  line-height: 1.02;
+  letter-spacing: -.045em;
+  text-wrap: balance;
+}
+.home-intro-page .hero-copy > p {
+  max-width: 570px;
+  margin: 0 0 28px;
+  color: #34416e;
+  font-size: .98rem;
+  line-height: 1.65;
+}
+.home-intro-page .hero-copy > p strong {
+  display: inline-block;
+  margin-bottom: 3px;
+  color: #17245c;
+  font-size: .9rem;
+  font-weight: 850;
+  letter-spacing: .015em;
+}
+.home-intro-page .hero-actions {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.home-intro-page .hero-actions .button {
+  min-height: 48px;
+  padding-inline: 20px;
+}
+
+/* The current lesson is presented as a single, coherent book cover. */
+.home-intro-page .study-visual {
+  width: min(330px, 100%);
+  aspect-ratio: .78;
+  margin: 0 auto;
+  filter: drop-shadow(0 28px 38px rgba(10, 17, 62, .24));
+}
+.home-intro-page .study-glow {
+  inset: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 78% 14%, rgba(237, 208, 119, .23), transparent 26%),
+    linear-gradient(155deg, #172773, #080e43 72%);
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 30px 18px 18px 30px;
+  box-shadow: inset 7px 0 rgba(255, 255, 255, .035), inset -1px 0 rgba(255, 255, 255, .12);
+  filter: none;
+}
+.home-intro-page .study-glow::before {
+  inset: 15px;
+  border-color: rgba(237, 211, 137, .18);
+  border-radius: 23px 12px 12px 23px;
+  transform: none;
+}
+.home-intro-page .study-glow::after {
+  inset: auto;
+  top: 30%;
+  left: 50%;
+  width: 1px;
+  height: 30%;
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(transparent, rgba(237, 211, 137, .2), transparent);
+  transform: none;
+}
+.home-intro-page .study-logo {
+  top: 7%;
+  left: 7%;
+  right: 7%;
+  padding: 10px 12px;
+  border-color: rgba(237, 211, 137, .42);
+  border-radius: 14px;
+  box-shadow: 0 14px 30px rgba(0, 0, 25, .26);
+}
+.home-intro-page .study-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.home-intro-page .study-logo > img {
+  width: 54px;
+  height: 54px;
+  flex: 0 0 54px;
+  object-fit: contain;
+}
+.home-intro-page .study-logo > span {
+  min-width: 0;
+  display: grid;
+  color: #111d5c;
+  line-height: 1.05;
+}
+.home-intro-page .study-logo > span strong,
+.home-intro-page .study-logo > span b {
+  overflow: hidden;
+  font-size: .75rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.home-intro-page .study-logo > span b { color: #2940bf; }
+.home-intro-page .study-logo > span small {
+  margin-top: 5px;
+  color: #68739e;
+  font-size: .46rem;
+  font-weight: 800;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+.home-intro-page .study-number {
+  bottom: 18%;
+  width: 158px;
+  min-height: 166px;
+  padding: 17px;
+  background: rgba(9, 16, 68, .72);
+  border-color: rgba(237, 211, 137, .28);
+  border-radius: 24px;
+  box-shadow: 0 20px 44px rgba(0, 0, 28, .34), inset 0 1px rgba(255, 255, 255, .1);
+}
+.home-intro-page .study-number strong {
+  font-size: 3.9rem;
+}
+.home-intro-page .study-language {
+  right: auto;
+  bottom: 6%;
+  left: 50%;
+  display: flex;
+  gap: 8px;
+  transform: translateX(-50%);
+}
+.home-intro-page .study-language span {
+  width: 32px;
+  height: 32px;
+  color: #f3dda1;
+  background: rgba(255, 255, 255, .08);
+  border-color: rgba(237, 211, 137, .24);
+  box-shadow: none;
+}
+
+/* Keep the atmosphere visible without allowing it to compete with the lesson. */
+.home-intro-page .hero::before {
+  top: -55%;
+  right: -24%;
+  width: min(64vw, 760px);
+  opacity: .24;
+}
+.home-intro-page .hero::after {
+  left: 18%;
+  bottom: -34%;
+  width: 46%;
+  height: 38%;
+  opacity: .48;
+}
+
+body:not(.reader-body)[data-time-theme="night"] .home-intro-page .eyebrow { color: #b9c4f1; }
+body:not(.reader-body)[data-time-theme="night"] .home-intro-page .spiritual-caption {
+  color: #f0d989;
+  background: rgba(237, 211, 137, .09);
+  border-color: rgba(237, 211, 137, .18);
+}
+body:not(.reader-body)[data-time-theme="night"] .home-intro-page .hero-copy > p { color: #c4cbea; }
+body:not(.reader-body)[data-time-theme="night"] .home-intro-page .hero-copy > p strong { color: #fff; }
+
+.home-page-controls {
+  right: max(22px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  padding: 6px;
+  gap: 5px;
+  border-radius: 16px;
+  box-shadow: 0 16px 34px rgba(6, 12, 52, .22);
+}
+.home-page-controls button {
+  min-width: 38px;
+  height: 38px;
+  border-radius: 11px;
+}
+
+@media (max-width: 940px) {
+  .home-intro-page .hero {
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 34px;
+  }
+  .home-intro-page .hero h1 { font-size: clamp(2.3rem, 5vw, 3.25rem); }
+  .home-intro-page .study-visual { width: 260px; }
+  .home-intro-page .study-number { width: 138px; min-height: 145px; }
+  .home-intro-page .study-number strong { font-size: 3.25rem; }
+}
+
+@media (max-width: 700px) {
+  .home-intro-page { padding: 10px 0 18px; }
+  .home-intro-page .hero {
+    width: min(calc(100% - 20px), 1180px);
+    min-height: calc(100dvh - 94px);
+    padding: 34px 22px 88px;
+    display: block;
+    border-radius: 24px;
+  }
+  .home-intro-page .hero-rule { margin-bottom: 16px; }
+  .home-intro-page .spiritual-caption {
+    margin: 8px 0 0;
+    display: flex;
+  }
+  .home-intro-page .hero h1 {
+    margin: 18px 0 16px;
+    font-size: clamp(2.15rem, 10.5vw, 3.25rem);
+  }
+  .home-intro-page .hero-copy > p { margin-bottom: 22px; font-size: .9rem; }
+  .home-intro-page .hero-actions { display: grid; }
+  .home-intro-page .study-visual { display: none; }
+  .home-page-controls {
+    right: 50%;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    transform: translateX(50%);
+  }
+}
