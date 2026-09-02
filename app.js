@@ -29,6 +29,14 @@
     document.getElementById("currentStudyTitle").textContent = currentStudy.title;
     document.getElementById("currentStudyDates").textContent = currentStudy.dates;
     document.getElementById("currentStudyNumber").textContent = String(currentStudy.week).padStart(2, "0");
+    const progressRing = document.getElementById("currentStudyProgress");
+    if (progressRing) {
+      const week = Math.max(1, Math.min(52, Number(currentStudy.week) || 1));
+      progressRing.style.strokeDasharray = "0 52";
+      window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+        progressRing.style.strokeDasharray = `${week} ${52 - week}`;
+      }));
+    }
     document.getElementById("currentStudyLink").href = `./reader.html?book=english&page=${currentStudy.page}`;
   }
 

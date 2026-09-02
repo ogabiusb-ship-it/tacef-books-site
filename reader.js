@@ -236,7 +236,7 @@ function showWeeks() {
   const activeIndex = weekIndexForPage();
   const calendarIndex = Math.max(0, (currentStudy?.week || 1) - 1);
   const list = document.getElementById("weekList");
-  list.innerHTML = weekPages.map((weekPage, index) => `<button type="button" data-week-index="${index}" class="${index === activeIndex ? "active" : ""} ${index === calendarIndex ? "current" : ""}" ${index === activeIndex ? 'aria-current="page"' : ""}>
+  list.innerHTML = weekPages.map((weekPage, index) => `<button type="button" data-week-index="${index}" style="--week-index:${index}" class="${index === activeIndex ? "active" : ""} ${index === calendarIndex ? "current" : ""}" ${index === activeIndex ? 'aria-current="page"' : ""}>
     <span>Week ${index + 1}</span><small>Page ${weekPage}</small><em>${weekTitles[index] || "Bible study lesson"}</em>
   </button>`).join("");
   document.getElementById("weeksDialogMeta").textContent = currentStudy ? `Current calendar lesson: Week ${currentStudy.week} · ${currentStudy.dates}` : "Choose any available lesson week.";

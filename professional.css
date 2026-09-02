@@ -26,6 +26,15 @@ html { scroll-padding-top: 92px; }
   border-bottom-color: rgba(232, 208, 138, .14);
   box-shadow: 0 10px 34px rgba(0, 0, 24, .24);
 }
+.brand .brand-copy strong {
+  color: currentColor !important;
+  text-shadow: none;
+}
+.brand .brand-copy small {
+  color: currentColor !important;
+  opacity: .68;
+  font-weight: 850;
+}
 
 .hero {
   border-color: rgba(232, 208, 138, .16);
@@ -482,6 +491,141 @@ body:not(.reader-body) {
 @keyframes spiritual-cloud-one { to { transform: translate3d(9vw, -1vh, 0); } }
 @keyframes spiritual-cloud-two { to { transform: translate3d(-8vw, 1.5vh, 0); } }
 
+/* A visible but calm living-book atmosphere inside the opening page. */
+.home-intro-page .hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-size: 145% 145%;
+  animation: hero-sky-shift 14s ease-in-out infinite alternate;
+}
+.home-intro-page .hero::before,
+.home-intro-page .hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+}
+.home-intro-page .hero::before {
+  top: -42%;
+  right: -14%;
+  width: min(68vw, 820px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 214deg, rgba(232, 188, 82, .1) 0deg 5deg, transparent 5deg 15deg);
+  filter: blur(1px);
+  opacity: .72;
+  animation: hero-light-rays 20s ease-in-out infinite alternate;
+}
+.home-intro-page .hero::after {
+  left: -10%;
+  bottom: -24%;
+  width: 66%;
+  height: 46%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 255, 255, .38), transparent 68%);
+  filter: blur(18px);
+  animation: hero-cloud-drift 16s ease-in-out infinite alternate;
+}
+.home-intro-page .hero > * { position: relative; z-index: 1; }
+
+.study-number {
+  isolation: isolate;
+  animation: study-week-float 5.5s ease-in-out infinite;
+}
+.study-week-ring {
+  position: absolute;
+  z-index: -1;
+  inset: 14px;
+  width: calc(100% - 28px);
+  height: calc(100% - 28px);
+  overflow: visible;
+  transform: rotate(-90deg);
+  filter: drop-shadow(0 0 7px rgba(244, 205, 103, .34));
+}
+.study-week-ring circle {
+  fill: none;
+  stroke-width: 2.4;
+}
+.study-week-ring-track { stroke: rgba(255, 255, 255, .13); }
+.study-week-ring-progress {
+  stroke: #efd173;
+  stroke-linecap: round;
+  stroke-dasharray: 0 52;
+  transition: stroke-dasharray 1.35s cubic-bezier(.2,.8,.2,1);
+}
+.study-number > small,
+.study-number > strong,
+.study-number > span { position: relative; z-index: 1; }
+.study-number > span { display: inline-flex; align-items: center; gap: 6px; }
+.study-number > span b { color: #efd173; font-size: .56rem; letter-spacing: .13em; }
+.study-number::before { animation: study-week-beacon 2.8s ease-in-out infinite; }
+
+.weeks-dialog[open] {
+  animation: week-dialog-enter .36s cubic-bezier(.2,.8,.2,1) both;
+}
+.weeks-dialog[open]::backdrop {
+  animation: week-backdrop-enter .3s ease both;
+}
+.weeks-dialog .week-list {
+  padding: 4px 6px 4px 2px;
+  gap: 10px;
+}
+.weeks-dialog .week-list button {
+  min-height: 76px;
+  padding: 13px 14px;
+  background: linear-gradient(145deg, #fffef9, #f1f3fa);
+  border-color: rgba(17, 29, 92, .14);
+  box-shadow: 0 8px 18px rgba(20, 29, 75, .07);
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.weeks-dialog .week-list button:hover {
+  transform: translateY(-3px);
+  border-color: rgba(210, 19, 40, .42);
+  box-shadow: 0 12px 24px rgba(20, 29, 75, .13);
+}
+.weeks-dialog[open] .week-list button {
+  animation: week-item-enter .38s cubic-bezier(.2,.8,.2,1) both;
+  animation-delay: min(calc(var(--week-index) * 12ms), 360ms);
+}
+.weeks-dialog .week-list button.active {
+  background: linear-gradient(145deg, #182a80, #090f47);
+  box-shadow: 0 12px 26px rgba(7, 13, 62, .25), inset 3px 0 #e0192d;
+}
+
+@keyframes hero-sky-shift {
+  from { background-position: 0% 20%; }
+  to { background-position: 100% 70%; }
+}
+@keyframes hero-light-rays {
+  from { opacity: .42; transform: rotate(-4deg) scale(.98); }
+  to { opacity: .82; transform: rotate(5deg) scale(1.06); }
+}
+@keyframes hero-cloud-drift {
+  from { opacity: .38; transform: translate3d(-4%, 0, 0) scale(.96); }
+  to { opacity: .7; transform: translate3d(20%, -5%, 0) scale(1.08); }
+}
+@keyframes study-week-float {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-7px); }
+}
+@keyframes study-week-beacon {
+  0%, 100% { opacity: .72; box-shadow: 0 0 12px rgba(224, 25, 45, .4); }
+  50% { opacity: 1; box-shadow: 0 0 24px rgba(224, 25, 45, .85); }
+}
+@keyframes week-dialog-enter {
+  from { opacity: 0; transform: translateY(22px) scale(.965); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes week-backdrop-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes week-item-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
 /* Daylight is genuinely light; night remains deeply devotional and dark. */
 body:not(.reader-body)[data-time-theme="morning"] {
   color: #18224f;
@@ -494,9 +638,18 @@ body:not(.reader-body)[data-time-theme="afternoon"] {
 body:not(.reader-body)[data-time-theme="morning"] .site-header,
 body:not(.reader-body)[data-time-theme="afternoon"] .site-header {
   color: #111a4d;
-  background: rgba(251, 250, 244, .9);
+  background: rgba(251, 250, 244, .96);
   border-bottom-color: rgba(16, 29, 84, .12);
   box-shadow: 0 10px 34px rgba(36, 50, 88, .12);
+}
+body:not(.reader-body)[data-time-theme="morning"] .brand .brand-copy strong,
+body:not(.reader-body)[data-time-theme="afternoon"] .brand .brand-copy strong {
+  color: #0b174f;
+}
+body:not(.reader-body)[data-time-theme="morning"] .brand .brand-copy small,
+body:not(.reader-body)[data-time-theme="afternoon"] .brand .brand-copy small {
+  color: #485994;
+  font-weight: 850;
 }
 body:not(.reader-body)[data-time-theme="morning"] .header-actions > a,
 body:not(.reader-body)[data-time-theme="afternoon"] .header-actions > a { color: #26325d; }
@@ -988,7 +1141,15 @@ body:not(.reader-body)[data-time-theme="afternoon"] :is(.book-details p, .book-k
   .home-arrival .hero-copy,
   .home-arrival .study-visual,
   .welcome-overlay.visible .welcome-page,
-  .spiritual-sky > span { animation: none !important; }
+  .spiritual-sky > span,
+  .home-intro-page .hero,
+  .home-intro-page .hero::before,
+  .home-intro-page .hero::after,
+  .study-number,
+  .study-number::before,
+  .weeks-dialog[open],
+  .weeks-dialog[open]::backdrop,
+  .weeks-dialog[open] .week-list button { animation: none !important; }
 }
 
 /* Release 15 — calm information hierarchy and essential-only reader header. */

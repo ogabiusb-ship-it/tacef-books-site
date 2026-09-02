@@ -82,7 +82,15 @@
         <div class="study-visual" aria-hidden="true">
           <div class="study-glow"></div>
           <div class="study-logo"><img src="./tacef-banner-logo.png" alt="" /></div>
-          <div class="study-number"><small>Current study</small><strong id="currentStudyNumber">01</strong><span>WEEK</span></div>
+          <div class="study-number">
+            <svg class="study-week-ring" viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="study-week-ring-track" cx="60" cy="60" r="53" pathLength="52"></circle>
+              <circle class="study-week-ring-progress" id="currentStudyProgress" cx="60" cy="60" r="53" pathLength="52"></circle>
+            </svg>
+            <small>Current study</small>
+            <strong id="currentStudyNumber">01</strong>
+            <span>WEEK <b>OF 52</b></span>
+          </div>
           <div class="study-language"><span>EN</span><span>YO</span><span>SOP</span></div>
         </div>
        </div>
