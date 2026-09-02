@@ -5,7 +5,6 @@ GlobalWorkerOptions.workerSrc = new URL("./vendor/pdfjs/pdf.worker.min.mjs", imp
 const books = window.TACEF_CATALOG || [];
 const params = new URLSearchParams(window.location.search);
 const book = books.find((item) => item.id === params.get("book")) || books[0];
-const readerName = String(localStorage.getItem("tacef-reader-name") || "").trim();
 const currentStudy = window.TACEF_STUDY_SCHEDULE?.getCurrentStudy(new Date(), book.id);
 const weekPages = window.TACEF_STUDY_SCHEDULE?.manualPages?.[book.id] || [1];
 const weekTitles = window.TACEF_STUDY_SCHEDULE?.titles || [];
@@ -405,7 +404,7 @@ function showBookmarks() {
 
 document.title = `${book.shortTitle} · TACEF Books`;
 document.getElementById("readerBookTitle").textContent = book.shortTitle;
-document.getElementById("readerBookMeta").textContent = `${readerName ? `Welcome ${readerName} · ` : ""}${book.language} · ${book.pages} pages`;
+document.getElementById("readerBookMeta").textContent = `${book.language} · ${book.pages} pages`;
 document.getElementById("storyMarkerTitle").textContent = currentStudy ? `Week ${currentStudy.week} · ${book.shortTitle}` : book.shortTitle;
 document.getElementById("errorPdfLink").href = book.file;
 updatePageControls();

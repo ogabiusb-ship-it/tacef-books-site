@@ -656,6 +656,165 @@ body:not(.reader-body)[data-time-theme="afternoon"] :is(.book-details p, .book-k
   .reader-header-controls #bookmarksButton::after { content: "★"; font-size: .72rem; }
 }
 
+/* Final responsive precedence for the release 16 reader header. */
+.reader-header { height: 76px; }
+.reader-title { flex: 0 1 320px; display: flex; }
+.reader-title div { display: grid; }
+.pdf-stage,
+.reader-body[data-time-theme="morning"] .pdf-stage,
+.reader-body[data-time-theme="afternoon"] .pdf-stage,
+.reader-body[data-time-theme="night"] .pdf-stage { padding-top: 76px; }
+.reader-loading { inset: 76px 0 0; }
+
+@media (max-width: 700px) {
+  .reader-header {
+    height: 112px;
+    padding: 6px 9px 8px;
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    grid-template-rows: 52px 40px;
+    column-gap: 8px;
+    row-gap: 5px;
+  }
+  .reader-back { grid-column: 1; grid-row: 1; width: 32px; }
+  .reader-title {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    display: flex;
+    gap: 9px;
+  }
+  .reader-title div { display: grid; }
+  .reader-header-controls {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    margin: 0;
+    justify-content: flex-start;
+  }
+  .pdf-stage,
+  .reader-body[data-time-theme="morning"] .pdf-stage,
+  .reader-body[data-time-theme="afternoon"] .pdf-stage,
+  .reader-body[data-time-theme="night"] .pdf-stage { padding-top: 112px; }
+  .reader-loading { inset: 112px 0 0; }
+}
+
+/* Release 16 — prominent manual identity and precisely aligned page counter. */
+.reader-header {
+  height: 76px;
+  padding: 8px 18px;
+}
+.reader-title {
+  flex: 0 1 320px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.reader-title div {
+  display: grid;
+  min-width: 0;
+  text-align: left;
+}
+.reader-title .reader-emblem {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  border-radius: 14px;
+}
+.reader-title .reader-emblem img {
+  width: 46px;
+  height: 46px;
+}
+.reader-title strong {
+  max-width: 245px;
+  font-size: 1.08rem;
+  line-height: 1.15;
+  text-align: left;
+}
+.reader-title small {
+  margin-top: 3px;
+  font-size: .68rem;
+  line-height: 1.15;
+  text-align: left;
+}
+.reader-header-controls #pagePositionButton {
+  min-width: 82px;
+  height: 38px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  line-height: 1;
+  background: rgba(213, 179, 83, .16);
+  border: 1px solid rgba(169, 128, 28, .42);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.58);
+}
+.reader-header-controls #pagePositionButton b {
+  display: inline-block;
+  font-size: .72rem;
+  line-height: 1;
+}
+.reader-header-controls #pagePositionButton span {
+  display: inline-block;
+  font-size: .62rem;
+  line-height: 1;
+}
+.pdf-stage,
+.reader-body[data-time-theme="morning"] .pdf-stage,
+.reader-body[data-time-theme="afternoon"] .pdf-stage,
+.reader-body[data-time-theme="night"] .pdf-stage { padding-top: 76px; }
+.reader-loading { inset: 76px 0 0; }
+
+@media (max-width: 700px) {
+  .reader-header {
+    height: 112px;
+    padding: 6px 9px 8px;
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    grid-template-rows: 52px 40px;
+    column-gap: 8px;
+    row-gap: 5px;
+  }
+  .reader-back {
+    grid-column: 1;
+    grid-row: 1;
+    width: 32px;
+  }
+  .reader-title {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    display: flex;
+    gap: 9px;
+  }
+  .reader-title .reader-emblem {
+    width: 46px;
+    height: 46px;
+    flex-basis: 46px;
+  }
+  .reader-title .reader-emblem img { width: 41px; height: 41px; }
+  .reader-title strong { max-width: none; font-size: 1rem; }
+  .reader-title small { font-size: .62rem; }
+  .reader-header-controls {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    margin: 0;
+    justify-content: flex-start;
+  }
+  .reader-header-controls #pagePositionButton {
+    min-width: 76px;
+    height: 34px;
+    padding-inline: 9px;
+  }
+  .pdf-stage,
+  .reader-body[data-time-theme="morning"] .pdf-stage,
+  .reader-body[data-time-theme="afternoon"] .pdf-stage,
+  .reader-body[data-time-theme="night"] .pdf-stage { padding-top: 112px; }
+  .reader-loading { inset: 112px 0 0; }
+}
+
 @media (max-width: 700px) {
   .site-header { min-height: 64px; }
   .home-book { height: calc(100dvh - 64px); }
@@ -803,4 +962,47 @@ body:not(.reader-body)[data-time-theme="afternoon"] :is(.book-details p, .book-k
   .reader-header-controls { justify-content: flex-start; }
   .reader-header-controls #bookmarksButton { display: grid; min-width: 32px; font-size: 0; }
   .reader-header-controls #bookmarksButton::after { content: "★"; font-size: .72rem; }
+}
+
+/* Authoritative mobile reader composition. */
+.reader-header { height: 76px; }
+.reader-title { flex: 0 1 320px; display: flex; }
+.reader-title div { display: grid; }
+.pdf-stage,
+.reader-body[data-time-theme="morning"] .pdf-stage,
+.reader-body[data-time-theme="afternoon"] .pdf-stage,
+.reader-body[data-time-theme="night"] .pdf-stage { padding-top: 76px; }
+.reader-loading { inset: 76px 0 0; }
+
+@media (max-width: 700px) {
+  .reader-header {
+    height: 112px;
+    padding: 6px 9px 8px;
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    grid-template-rows: 52px 40px;
+    column-gap: 8px;
+    row-gap: 5px;
+  }
+  .reader-back { grid-column: 1; grid-row: 1; width: 32px; }
+  .reader-title {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    display: flex;
+    gap: 9px;
+  }
+  .reader-title div { display: grid; }
+  .reader-header-controls {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    margin: 0;
+    justify-content: flex-start;
+  }
+  .pdf-stage,
+  .reader-body[data-time-theme="morning"] .pdf-stage,
+  .reader-body[data-time-theme="afternoon"] .pdf-stage,
+  .reader-body[data-time-theme="night"] .pdf-stage { padding-top: 112px; }
+  .reader-loading { inset: 112px 0 0; }
 }
