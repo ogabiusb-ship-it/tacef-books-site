@@ -4,7 +4,7 @@
     const theme = hour >= 5 && hour < 12 ? "morning" : hour >= 12 && hour < 18 ? "afternoon" : "night";
     document.body.dataset.timeTheme = theme;
     document.documentElement.style.colorScheme = theme === "night" ? "dark" : "light";
-    const themeColors = { morning: "#253b82", afternoon: "#1c4a93", night: "#070b35" };
+    const themeColors = { morning: "#fff8e7", afternoon: "#e7f1fa", night: "#070b35" };
     const captions = {
       morning: "Morning grace · Begin the day in God’s Word",
       afternoon: "Steady light · Grow through God’s Word",

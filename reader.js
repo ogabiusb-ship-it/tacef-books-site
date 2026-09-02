@@ -265,9 +265,9 @@ function scheduleChromeHide() {
 }
 
 function hideReaderChrome() {
-  const focusedControl = document.activeElement?.closest?.(".reader-header, .reader-tool-dock, dialog");
+  const focusedControl = document.activeElement?.closest?.(".reader-header, dialog");
   const keyboardFocus = focusedControl && document.activeElement.matches?.(":focus-visible");
-  const hoveredControls = document.querySelector(".reader-header:hover, .reader-tool-dock:hover");
+  const hoveredControls = document.querySelector(".reader-header:hover");
   if (document.querySelector("dialog[open]") || keyboardFocus || hoveredControls || isTurning) { scheduleChromeHide(); return; }
   document.body.classList.add("reader-chrome-hidden");
 }
@@ -519,7 +519,7 @@ window.addEventListener("keydown", (event) => {
 window.addEventListener("pointermove", (event) => {
   if (event.pointerType === "mouse" && event.clientY <= 96) showReaderChrome();
 });
-document.querySelectorAll(".reader-header, .reader-tool-dock").forEach((element) => {
+document.querySelectorAll(".reader-header").forEach((element) => {
   element.addEventListener("pointerenter", showReaderChrome);
   element.addEventListener("focusin", showReaderChrome);
 });

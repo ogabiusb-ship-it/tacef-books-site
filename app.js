@@ -13,9 +13,11 @@
   const installInstructions = document.getElementById("installInstructions");
   const welcomeOverlay = document.getElementById("welcomeOverlay");
   const nameStep = document.getElementById("nameStep");
-  const manualStep = document.getElementById("manualStep");
+  const homeBook = document.getElementById("homeBook");
+  const homePages = [...homeBook.querySelectorAll(":scope > .home-book-page")];
   const installButtons = [document.getElementById("installButton"), document.getElementById("heroInstallButton")].filter(Boolean);
   let deferredInstallPrompt = null;
+  let homePageIndex = 0;
 
   const absolute = (path) => new URL(path, window.location.href).href;
   const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
@@ -58,52 +60,73 @@
     const displayName = cleanReaderName(name) || "Reader";
     document.getElementById("profileName").textContent = displayName;
     document.getElementById("profileInitial").textContent = displayName.charAt(0).toLocaleUpperCase();
-    document.getElementById("welcomeName").textContent = displayName;
     return displayName;
-  }
-
-  function renderWelcomeManuals() {
-    document.getElementById("welcomeWeek").textContent = currentStudy.week;
-    document.getElementById("welcomeManuals").innerHTML = books.map((book, index) => {
-      const study = studyForBook(book);
-      return `<a class="welcome-manual" href="${bookHref(book)}">
-        <img src="${book.cover}" alt="" />
-        <span><small>Volume ${String(index + 1).padStart(2, "0")} · ${book.language}</small><strong>${book.shortTitle}</strong><em>Week ${study.week} · Page ${study.page} →</em></span>
-      </a>`;
-    }).join("");
   }
 
   function showNameStep() {
     nameStep.hidden = false;
-    manualStep.hidden = true;
-    welcomeOverlay.classList.remove("show-manuals");
     const savedName = localStorage.getItem(readerNameKey) || "";
     document.getElementById("readerName").value = savedName;
     window.setTimeout(() => document.getElementById("readerName").focus(), 420);
   }
 
-  function showManualStep(name) {
-    updateReaderIdentity(name);
-    renderWelcomeManuals();
-    nameStep.hidden = true;
-    manualStep.hidden = false;
-    welcomeOverlay.classList.add("show-manuals");
-  }
-
-  function openWelcome(editName = false) {
-    const savedName = cleanReaderName(localStorage.getItem(readerNameKey));
+  function openWelcome() {
     welcomeOverlay.hidden = false;
     document.body.classList.add("welcome-open");
-    if (editName || !savedName) showNameStep();
-    else showManualStep(savedName);
+    showNameStep();
     requestAnimationFrame(() => welcomeOverlay.classList.add("visible"));
   }
 
-  function closeWelcome() {
+  function closeWelcome({ arriveHome = false } = {}) {
     localStorage.setItem(welcomeSeenKey, "1");
     welcomeOverlay.classList.remove("visible");
     document.body.classList.remove("welcome-open");
-    window.setTimeout(() => { welcomeOverlay.hidden = true; }, 360);
+    window.setTimeout(() => {
+      welcomeOverlay.hidden = true;
+      if (arriveHome) {
+        goHomePage(0, false);
+        document.body.classList.add("home-arrival");
+        window.setTimeout(() => document.body.classList.remove("home-arrival"), 1100);
+      }
+    }, 360);
+  }
+
+  function updateHomePageControls() {
+    document.getElementById("homePreviousPage").disabled = homePageIndex === 0;
+    document.getElementById("homeNextPage").disabled = homePageIndex === homePages.length - 1;
+    const position = document.getElementById("homePagePosition");
+    position.querySelector("b").textContent = String(homePageIndex + 1);
+    position.querySelector("small").textContent = String(homePages.length);
+    position.setAttribute("aria-label", `Home page ${homePageIndex + 1} of ${homePages.length}`);
+    document.body.dataset.homePage = String(homePageIndex);
+  }
+
+  function goHomePage(index, smooth = true) {
+    homePageIndex = Math.max(0, Math.min(homePages.length - 1, Number(index) || 0));
+    homeBook.scrollTo({ left: homePageIndex * homeBook.clientWidth, behavior: smooth ? "smooth" : "auto" });
+    updateHomePageControls();
+  }
+
+  function initHomeBook() {
+    document.getElementById("homePreviousPage").addEventListener("click", () => goHomePage(homePageIndex - 1));
+    document.getElementById("homeNextPage").addEventListener("click", () => goHomePage(homePageIndex + 1));
+    document.getElementById("homePagePosition").addEventListener("click", () => goHomePage(homePageIndex === 0 ? 1 : 0));
+    document.getElementById("browseLibraryButton").addEventListener("click", () => goHomePage(1));
+    document.querySelector('.header-actions a[href="#library"]')?.addEventListener("click", (event) => { event.preventDefault(); goHomePage(1); });
+    homeBook.addEventListener("scroll", () => {
+      window.clearTimeout(initHomeBook.scrollTimer);
+      initHomeBook.scrollTimer = window.setTimeout(() => {
+        homePageIndex = Math.round(homeBook.scrollLeft / Math.max(1, homeBook.clientWidth));
+        updateHomePageControls();
+      }, 70);
+    }, { passive: true });
+    window.addEventListener("resize", () => goHomePage(homePageIndex, false));
+    window.addEventListener("keydown", (event) => {
+      if (!welcomeOverlay.hidden || document.querySelector("dialog[open]") || event.target.closest?.("input, textarea, button, a")) return;
+      if (event.key === "ArrowLeft") { event.preventDefault(); goHomePage(homePageIndex - 1); }
+      if (event.key === "ArrowRight") { event.preventDefault(); goHomePage(homePageIndex + 1); }
+    });
+    updateHomePageControls();
   }
 
   async function isBookCached(book) {
@@ -221,15 +244,16 @@
     if (!name) return;
     localStorage.setItem(readerNameKey, name);
     localStorage.setItem(welcomeSeenKey, "1");
-    showManualStep(name);
+    updateReaderIdentity(name);
+    closeWelcome({ arriveHome: true });
   });
   document.getElementById("continueAsGuest").addEventListener("click", () => {
     localStorage.setItem(welcomeSeenKey, "1");
-    showManualStep("Reader");
+    updateReaderIdentity("Reader");
+    closeWelcome({ arriveHome: true });
   });
-  document.getElementById("profileButton").addEventListener("click", () => openWelcome(true));
+  document.getElementById("profileButton").addEventListener("click", openWelcome);
   document.getElementById("welcomeCloseButton").addEventListener("click", closeWelcome);
-  document.getElementById("browseLibraryButton").addEventListener("click", () => { closeWelcome(); document.getElementById("library").scrollIntoView({ behavior: "smooth" }); });
   welcomeOverlay.addEventListener("click", (event) => { if (event.target === welcomeOverlay) closeWelcome(); });
   window.addEventListener("keydown", (event) => { if (event.key === "Escape" && !welcomeOverlay.hidden) closeWelcome(); });
 
@@ -240,6 +264,7 @@
   updateNetworkStatus();
   renderBooks();
   renderContinueReading();
+  initHomeBook();
   const returningReader = Boolean(cleanReaderName(localStorage.getItem(readerNameKey))) || localStorage.getItem(welcomeSeenKey) === "1";
-  if (!returningReader) window.setTimeout(() => openWelcome(false), 260);
+  if (!returningReader) window.setTimeout(openWelcome, 260);
 })();

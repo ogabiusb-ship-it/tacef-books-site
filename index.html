@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#070b35" />
-    <meta name="description" content="Read, search and save the official TACEF 2026 manuals for offline use." />
+    <meta name="description" content="Read the official TACEF 2026 manuals in a peaceful, interactive digital-book experience." />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -61,19 +61,13 @@
             </form>
             <button class="welcome-text-button" id="continueAsGuest" type="button">Continue without entering a name</button>
           </div>
-          <div class="welcome-step manual-step" id="manualStep" hidden>
-            <span class="welcome-kicker">This week’s reading</span>
-            <h2>Welcome <span id="welcomeName">Reader</span> to TACEF Books</h2>
-            <p>Select your manual. Each one opens directly at Week <strong id="welcomeWeek">1</strong>.</p>
-            <div class="welcome-manuals" id="welcomeManuals"></div>
-            <button class="welcome-text-button" id="browseLibraryButton" type="button">Browse the complete library</button>
-          </div>
         </div>
       </div>
     </section>
 
-    <main>
-      <section class="hero shell" aria-labelledby="heroTitle">
+    <main class="home-book" id="homeBook" aria-label="TACEF Books home pages">
+      <section class="home-book-page home-intro-page" data-home-page="0" aria-labelledby="heroTitle">
+       <div class="hero shell">
         <div class="hero-copy">
           <span class="hero-rule" aria-hidden="true"></span>
           <span class="eyebrow" id="currentStudyWeek">This week · TACEF 2026 / 2027</span>
@@ -82,7 +76,7 @@
           <p><strong id="currentStudyDates">Current weekly study</strong><br />Continue directly to this week’s lesson, or browse the complete English, Yoruba and Seed of Purpose manuals.</p>
           <div class="hero-actions">
             <a class="button button-primary" id="currentStudyLink" href="./reader.html?book=english&page=73">Open current study <span aria-hidden="true">→</span></a>
-            <a class="button button-secondary" href="#library">Browse all manuals</a>
+            <button class="button button-secondary" id="browseLibraryButton" type="button">Browse all manuals</button>
             <button class="button button-secondary" id="heroInstallButton" type="button">Install TACEF Books</button>
           </div>
           <div class="trust-row" aria-label="App features">
@@ -100,28 +94,35 @@
           <div class="study-number"><small>Current study</small><strong id="currentStudyNumber">01</strong><span>WEEK</span></div>
           <div class="study-language"><span>EN</span><span>YO</span><span>SOP</span></div>
         </div>
+       </div>
       </section>
 
-      <section class="continue-panel shell hidden" id="continuePanel" aria-labelledby="continueTitle">
-        <div><span class="eyebrow">Continue reading</span><h2 id="continueTitle">Your last manual</h2><p id="continueMeta"></p></div>
-        <a class="button button-primary" id="continueLink" href="./reader.html">Resume</a>
-      </section>
-
-      <section class="library-section shell" id="library" aria-labelledby="libraryTitle">
-        <div class="section-heading">
-          <div><span class="eyebrow">Inside the TACEF storybook</span><h2 id="libraryTitle">Three living manuals</h2></div>
+      <section class="home-book-page home-library-page" id="library" data-home-page="1" aria-labelledby="libraryTitle">
+        <div class="library-section shell">
+          <section class="continue-panel hidden" id="continuePanel" aria-labelledby="continueTitle">
+            <div><span class="eyebrow">Continue reading</span><h2 id="continueTitle">Your last manual</h2><p id="continueMeta"></p></div>
+            <a class="button button-primary" id="continueLink" href="./reader.html">Resume</a>
+          </section>
+          <div class="section-heading">
+            <div><span class="eyebrow">Inside the TACEF storybook</span><h2 id="libraryTitle">Choose a living manual</h2></div>
+          </div>
+          <div class="book-grid" id="bookGrid"></div>
         </div>
-        <div class="book-grid" id="bookGrid"></div>
+        <footer class="site-footer">
+          <div class="shell footer-inner">
+            <div class="footer-brand"><span class="footer-emblem"><img src="./tacef-favicon.png" alt="" /></span><div><strong>TACEF Books</strong><span>Growing in God’s Word, one lesson at a time.</span></div></div>
+            <div class="footer-church-mark"><img src="./tacef-banner-logo.png" alt="The African Church Evangelical Fellowship" /></div>
+            <p>© <span id="footerYear">2026</span> TACEF Books · The African Church Evangelical Fellowship</p>
+          </div>
+        </footer>
       </section>
     </main>
 
-    <footer class="site-footer">
-      <div class="shell footer-inner">
-        <div class="footer-brand"><span class="footer-emblem"><img src="./tacef-favicon.png" alt="" /></span><div><strong>TACEF Books</strong><span>Growing in God’s Word, one lesson at a time.</span></div></div>
-        <div class="footer-church-mark"><img src="./tacef-banner-logo.png" alt="The African Church Evangelical Fellowship" /></div>
-        <p>© <span id="footerYear">2026</span> TACEF Books · The African Church Evangelical Fellowship</p>
-      </div>
-    </footer>
+    <nav class="home-page-controls" aria-label="Homepage pages">
+      <button id="homePreviousPage" type="button" aria-label="Previous home page">←</button>
+      <button id="homePagePosition" type="button" aria-label="Home page 1 of 2"><b>1</b><span>/</span><small>2</small></button>
+      <button id="homeNextPage" type="button" aria-label="Next home page">→</button>
+    </nav>
 
     <dialog class="app-dialog" id="installDialog">
       <button class="dialog-close" data-close-dialog type="button" aria-label="Close">×</button>
