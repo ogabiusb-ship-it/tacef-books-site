@@ -3,7 +3,6 @@
   const schedule = window.TACEF_STUDY_SCHEDULE;
   const today = new Date();
   const currentStudy = schedule?.getCurrentStudy(today, "english") || { week: 1, page: 73, title: "Becoming a Trusted Soldier in the Lord’s Army", dates: "31 August – 6 September 2026" };
-  const manualCacheName = "tacef-manuals-v1";
   const readerNameKey = "tacef-reader-name";
   const welcomeSeenKey = "tacef-welcome-seen";
   const grid = document.getElementById("bookGrid");
@@ -18,7 +17,6 @@
   let deferredInstallPrompt = null;
   let homePageIndex = 0;
 
-  const absolute = (path) => new URL(path, window.location.href).href;
   const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
   const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
   const studyForBook = (book) => schedule?.getCurrentStudy(today, book.id) || { ...currentStudy, page: 1 };
@@ -104,7 +102,9 @@
   }
 
   function goHomePage(index, smooth = true) {
+    const previousIndex = homePageIndex;
     homePageIndex = Math.max(0, Math.min(homePages.length - 1, Number(index) || 0));
+    if (homePageIndex !== previousIndex) homePages[homePageIndex]?.scrollTo({ top: 0, behavior: "auto" });
     homeBook.scrollTo({ left: homePageIndex * homeBook.clientWidth, behavior: smooth ? "smooth" : "auto" });
     updateHomePageControls();
   }
@@ -150,13 +150,7 @@
     updateHomePageControls();
   }
 
-  async function isBookCached(book) {
-    if (!("caches" in window)) return false;
-    const cache = await caches.open(manualCacheName);
-    return Boolean(await cache.match(absolute(book.file)));
-  }
-
-  async function renderBooks() {
+  function renderBooks() {
     grid.innerHTML = books.map((book, index) => {
       const study = studyForBook(book);
       return `
@@ -164,60 +158,17 @@
         <a class="book-cover" href="${bookHref(book)}" aria-label="Read ${book.title}">
           <img src="${book.cover}" alt="Cover of ${book.title}" loading="lazy" />
           <span class="volume-index">Volume ${String(index + 1).padStart(2, "0")}</span>
-          <span class="offline-tag" hidden>Available offline</span>
           <span class="current-week-tag">Week ${study.week} · Page ${study.page}</span>
         </a>
         <div class="book-details">
           <div class="book-kicker"><span>${book.language}</span><span>${book.pages} pages</span></div>
-          <h3>${book.shortTitle}</h3>
+          <div class="book-copy"><h3>${book.shortTitle}</h3><p>${book.description}</p></div>
           <div class="book-actions">
-            <a class="button button-primary" href="${bookHref(book)}">Open Week ${study.week}</a>
-            <button class="button button-secondary download-button" data-download="${book.id}" type="button">Save offline</button>
+            <a class="button button-primary" href="${bookHref(book)}"><span>Open Week ${study.week}</span><b aria-hidden="true">→</b></a>
           </div>
         </div>
       </article>`;
     }).join("");
-
-    await Promise.all(books.map(refreshBookStatus));
-    grid.querySelectorAll("[data-download]").forEach((button) => button.addEventListener("click", () => toggleOffline(button.dataset.download)));
-  }
-
-  async function refreshBookStatus(book) {
-    const card = grid.querySelector(`[data-book-id="${book.id}"]`);
-    if (!card) return;
-    const cached = await isBookCached(book);
-    const button = card.querySelector("[data-download]");
-    button.textContent = cached ? "Remove offline copy" : "Save offline";
-    button.classList.toggle("is-saved", cached);
-    card.querySelector(".offline-tag").hidden = !cached;
-  }
-
-  async function toggleOffline(bookId) {
-    const book = books.find((item) => item.id === bookId);
-    const button = grid.querySelector(`[data-download="${bookId}"]`);
-    if (!book || !button || !("caches" in window)) return;
-    button.disabled = true;
-    const cache = await caches.open(manualCacheName);
-    const cached = await cache.match(absolute(book.file));
-    try {
-      if (cached) {
-        await Promise.all([cache.delete(absolute(book.file)), cache.delete(absolute(book.index))]);
-        showToast(`${book.shortTitle} removed from offline storage.`);
-      } else {
-        if (!navigator.onLine) throw new Error("Connect to the internet before downloading this manual.");
-        button.textContent = "Saving…";
-        if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
-        const [pdfResponse, indexResponse] = await Promise.all([fetch(book.file), fetch(book.index)]);
-        if (!pdfResponse.ok || !indexResponse.ok) throw new Error("The manual could not be downloaded.");
-        await Promise.all([cache.put(absolute(book.file), pdfResponse), cache.put(absolute(book.index), indexResponse)]);
-        showToast(`${book.shortTitle} is now available offline.`);
-      }
-    } catch (error) {
-      showToast(error.message || "The offline copy could not be updated.");
-    } finally {
-      button.disabled = false;
-      await refreshBookStatus(book);
-    }
   }
 
   function renderContinueReading() {
@@ -235,7 +186,7 @@
 
   function showInstallDialog() {
     if (isStandalone()) {
-      installInstructions.innerHTML = "<p>TACEF Books is already installed on this device. Save any manual for complete offline reading.</p>";
+      installInstructions.innerHTML = "<p>TACEF Books is already installed on this device and ready for full-screen reading.</p>";
       document.getElementById("dialogInstallButton").hidden = true;
     } else if (isIOS()) {
       installInstructions.innerHTML = "<ol><li>Open this page in Safari.</li><li>Tap the <strong>Share</strong> button.</li><li>Select <strong>Add to Home Screen</strong>, then tap Add.</li></ol>";
@@ -285,6 +236,10 @@
   renderBooks();
   renderContinueReading();
   initHomeBook();
+  if (window.location.hash === "#library") goHomePage(1, false);
+  window.addEventListener("hashchange", () => {
+    if (window.location.hash === "#library") goHomePage(1, false);
+  });
   const returningReader = Boolean(cleanReaderName(localStorage.getItem(readerNameKey))) || localStorage.getItem(welcomeSeenKey) === "1";
   if (!returningReader) window.setTimeout(openWelcome, 260);
 })();
