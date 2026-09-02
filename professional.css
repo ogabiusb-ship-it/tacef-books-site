@@ -699,6 +699,102 @@ body:not(.reader-body)[data-time-theme="afternoon"] :is(.book-details p, .book-k
   .reader-loading { inset: 112px 0 0; }
 }
 
+/* Release 17 — spacious home pages with vertical overflow when required. */
+.home-book { touch-action: pan-x pan-y; }
+.home-book-page {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(30, 45, 105, .3) transparent;
+}
+.home-book-page::-webkit-scrollbar { width: 7px; }
+.home-book-page::-webkit-scrollbar-thumb { background: rgba(30, 45, 105, .28); border-radius: 99px; }
+.home-intro-page { display: block; }
+.home-intro-page .hero {
+  height: auto;
+  min-height: calc(100% - 38px);
+  box-sizing: border-box;
+}
+.home-library-page {
+  display: block;
+  overflow-y: auto;
+}
+.home-library-page .library-section {
+  min-height: auto;
+  padding-top: clamp(38px, 6vh, 72px);
+  padding-bottom: clamp(48px, 7vh, 82px);
+}
+.home-library-page .section-heading { margin-bottom: 28px; }
+.home-library-page .book-grid {
+  min-height: auto;
+  align-items: start;
+  gap: clamp(24px, 2.6vw, 38px);
+}
+.home-library-page .book-card {
+  height: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.home-library-page .book-cover {
+  height: clamp(250px, 27vw, 370px);
+  min-height: 250px;
+  flex: 0 0 auto;
+}
+.home-library-page .book-details {
+  min-height: 190px;
+  padding: 24px;
+  flex: 1;
+}
+.home-library-page .site-footer { position: relative; }
+
+#homePagePosition {
+  min-width: 54px;
+  height: 36px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  line-height: 1;
+}
+#homePagePosition b,
+#homePagePosition span,
+#homePagePosition small {
+  position: static;
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+@media (max-width: 700px) {
+  .home-intro-page .hero {
+    height: auto;
+    min-height: calc(100% - 20px);
+  }
+  .home-library-page .library-section {
+    min-height: auto;
+    padding-top: 28px;
+    padding-bottom: 96px;
+  }
+  .home-library-page .book-grid {
+    min-height: 520px;
+    align-items: flex-start;
+  }
+  .home-library-page .book-card {
+    height: auto;
+    min-height: 500px;
+  }
+  .home-library-page .book-cover {
+    height: 300px;
+    min-height: 300px;
+  }
+  .home-library-page .book-details { min-height: 185px; }
+}
+
 /* Release 16 — prominent manual identity and precisely aligned page counter. */
 .reader-header {
   height: 76px;
@@ -1005,4 +1101,81 @@ body:not(.reader-body)[data-time-theme="afternoon"] :is(.book-details p, .book-k
   .reader-body[data-time-theme="afternoon"] .pdf-stage,
   .reader-body[data-time-theme="night"] .pdf-stage { padding-top: 112px; }
   .reader-loading { inset: 112px 0 0; }
+}
+
+/* Authoritative spacious home-page composition. */
+.home-book { touch-action: auto; }
+.home-book-page {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(30, 45, 105, .3) transparent;
+}
+.home-intro-page { display: block; }
+.home-intro-page .hero {
+  height: auto;
+  min-height: calc(100% - 38px);
+  box-sizing: border-box;
+}
+.home-library-page { display: block; overflow-y: auto; }
+.home-library-page .library-section {
+  min-height: auto;
+  padding-top: clamp(38px, 6vh, 72px);
+  padding-bottom: clamp(48px, 7vh, 82px);
+}
+.home-library-page .section-heading { margin-bottom: 28px; }
+.home-library-page .book-grid {
+  min-height: auto;
+  align-items: start;
+  gap: clamp(24px, 2.6vw, 38px);
+}
+.home-library-page .book-card {
+  height: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.home-library-page .book-cover {
+  height: clamp(250px, 27vw, 370px);
+  min-height: 250px;
+  flex: 0 0 auto;
+}
+.home-library-page .book-details {
+  min-height: 190px;
+  padding: 24px;
+  flex: 1;
+}
+#homePagePosition {
+  min-width: 54px;
+  height: 36px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  line-height: 1;
+}
+#homePagePosition b,
+#homePagePosition span,
+#homePagePosition small {
+  position: static;
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+@media (max-width: 700px) {
+  .home-intro-page .hero { height: auto; min-height: calc(100% - 20px); }
+  .home-library-page .library-section {
+    min-height: auto;
+    padding-top: 28px;
+    padding-bottom: 96px;
+  }
+  .home-library-page .book-grid { min-height: 520px; align-items: flex-start; }
+  .home-library-page .book-card { height: auto; min-height: 500px; }
+  .home-library-page .book-cover { height: 300px; min-height: 300px; }
+  .home-library-page .book-details { min-height: 185px; padding: 18px; }
 }

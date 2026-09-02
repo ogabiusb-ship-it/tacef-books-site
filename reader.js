@@ -316,6 +316,14 @@ stage.addEventListener("touchstart", (event) => {
   scheduleChromeHide();
 }, { passive: true });
 
+stage.addEventListener("touchmove", (event) => {
+  if (!touchStart || event.touches.length !== 1) return;
+  const touch = event.touches[0];
+  const distanceX = touch.clientX - touchStart.x;
+  const distanceY = touch.clientY - touchStart.y;
+  if (Math.abs(distanceX) > 12 && Math.abs(distanceX) > Math.abs(distanceY) * 1.1) event.preventDefault();
+}, { passive: false });
+
 stage.addEventListener("touchend", (event) => {
   if (!touchStart || event.changedTouches.length !== 1 || isTurning) { touchStart = null; return; }
   const touch = event.changedTouches[0];
@@ -327,10 +335,12 @@ stage.addEventListener("touchend", (event) => {
 
   if (interactive) { showReaderChrome(); return; }
   if (elapsed < 420 && Math.abs(distanceX) < 12 && Math.abs(distanceY) < 12) { toggleReaderChrome(); return; }
-  if (elapsed > 900 || Math.abs(distanceX) < 58 || Math.abs(distanceX) < Math.abs(distanceY) * 1.25) return;
+  if (elapsed > 1200 || Math.abs(distanceX) < 38 || Math.abs(distanceX) < Math.abs(distanceY) * 1.1) return;
   dismissGestureGuide();
   openPage(page + (distanceX < 0 ? 1 : -1), true);
 }, { passive: true });
+
+stage.addEventListener("touchcancel", () => { touchStart = null; }, { passive: true });
 
 stage.addEventListener("wheel", (event) => {
   scheduleChromeHide();

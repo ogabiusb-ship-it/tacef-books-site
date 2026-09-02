@@ -102,6 +102,7 @@
   }
 
   function initHomeBook() {
+    let homeTouchStart = null;
     document.getElementById("homePreviousPage").addEventListener("click", () => goHomePage(homePageIndex - 1));
     document.getElementById("homeNextPage").addEventListener("click", () => goHomePage(homePageIndex + 1));
     document.getElementById("homePagePosition").addEventListener("click", () => goHomePage(homePageIndex === 0 ? 1 : 0));
@@ -114,6 +115,24 @@
         updateHomePageControls();
       }, 70);
     }, { passive: true });
+    homeBook.addEventListener("touchstart", (event) => {
+      if (event.touches.length !== 1 || !welcomeOverlay.hidden || document.querySelector("dialog[open]")) return;
+      const touch = event.touches[0];
+      homeTouchStart = { x: touch.clientX, y: touch.clientY, at: Date.now(), target: event.target };
+    }, { passive: true });
+    homeBook.addEventListener("touchend", (event) => {
+      if (!homeTouchStart || event.changedTouches.length !== 1) { homeTouchStart = null; return; }
+      const touch = event.changedTouches[0];
+      const distanceX = touch.clientX - homeTouchStart.x;
+      const distanceY = touch.clientY - homeTouchStart.y;
+      const elapsed = Date.now() - homeTouchStart.at;
+      const touchedGrid = homeTouchStart.target.closest?.(".book-grid");
+      homeTouchStart = null;
+      if (elapsed > 1200 || Math.abs(distanceX) < 42 || Math.abs(distanceX) < Math.abs(distanceY) * 1.1) return;
+      if (touchedGrid && distanceX > 0 && touchedGrid.scrollLeft > 8) return;
+      goHomePage(homePageIndex + (distanceX < 0 ? 1 : -1));
+    }, { passive: true });
+    homeBook.addEventListener("touchcancel", () => { homeTouchStart = null; }, { passive: true });
     window.addEventListener("resize", () => goHomePage(homePageIndex, false));
     window.addEventListener("keydown", (event) => {
       if (!welcomeOverlay.hidden || document.querySelector("dialog[open]") || event.target.closest?.("input, textarea, button, a")) return;
