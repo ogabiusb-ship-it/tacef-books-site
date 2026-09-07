@@ -102,11 +102,21 @@
     document.body.dataset.homePage = String(homePageIndex);
   }
 
+  function animateHomePage(pageElement) {
+    if (!pageElement || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    pageElement.classList.remove("page-entering");
+    void pageElement.offsetWidth;
+    pageElement.classList.add("page-entering");
+    window.clearTimeout(animateHomePage.timer);
+    animateHomePage.timer = window.setTimeout(() => pageElement.classList.remove("page-entering"), 760);
+  }
+
   function goHomePage(index, smooth = true) {
     const previousIndex = homePageIndex;
     homePageIndex = Math.max(0, Math.min(homePages.length - 1, Number(index) || 0));
     if (homePageIndex !== previousIndex) homePages[homePageIndex]?.scrollTo({ top: 0, behavior: "auto" });
     homeBook.scrollTo({ left: homePageIndex * homeBook.clientWidth, behavior: smooth ? "smooth" : "auto" });
+    if (homePageIndex !== previousIndex) animateHomePage(homePages[homePageIndex]);
     updateHomePageControls();
   }
 
@@ -120,7 +130,9 @@
     homeBook.addEventListener("scroll", () => {
       window.clearTimeout(initHomeBook.scrollTimer);
       initHomeBook.scrollTimer = window.setTimeout(() => {
-        homePageIndex = Math.round(homeBook.scrollLeft / Math.max(1, homeBook.clientWidth));
+        const nextIndex = Math.round(homeBook.scrollLeft / Math.max(1, homeBook.clientWidth));
+        if (nextIndex !== homePageIndex) animateHomePage(homePages[nextIndex]);
+        homePageIndex = nextIndex;
         updateHomePageControls();
       }, 70);
     }, { passive: true });

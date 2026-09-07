@@ -2234,3 +2234,51 @@ body:not(.reader-body)[data-time-theme="night"] .book-actions .offline-save-butt
   .home-library-page .book-actions { grid-template-columns: 1fr; }
   .home-library-page .book-actions .button { min-height: 48px; font-size: .76rem; }
 }
+
+/* Release 24 — unified premium motion across navigation, themes and reading. */
+.home-book {
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+}
+.home-book-page.page-entering .hero-copy,
+.home-book-page.page-entering .section-heading {
+  animation: page-content-enter .58s cubic-bezier(.16, .84, .24, 1) both;
+}
+.home-book-page.page-entering .study-visual,
+.home-book-page.page-entering .book-grid {
+  animation: page-visual-enter .68s cubic-bezier(.16, .84, .24, 1) 70ms both;
+}
+.spiritual-sky,
+.spiritual-sky > span,
+.home-intro-page .hero::before,
+.home-intro-page .hero::after {
+  transition: opacity .9s ease, background 1s ease, transform 1s cubic-bezier(.2, .75, .2, 1);
+}
+.home-page-controls,
+.site-header,
+.reader-header,
+.toast,
+.app-dialog {
+  transition-timing-function: cubic-bezier(.2, .75, .2, 1);
+}
+.book-leaf.turn-forward-out { animation: page-forward-out .24s cubic-bezier(.4, 0, .8, .25) both; }
+.book-leaf.turn-forward-in { animation: page-forward-in .4s cubic-bezier(.16, .8, .2, 1) both; }
+.book-leaf.turn-backward-out { animation: page-backward-out .24s cubic-bezier(.4, 0, .8, .25) both; }
+.book-leaf.turn-backward-in { animation: page-backward-in .4s cubic-bezier(.16, .8, .2, 1) both; }
+
+@keyframes page-content-enter {
+  from { opacity: 0; transform: translate3d(-18px, 8px, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes page-visual-enter {
+  from { opacity: 0; transform: translate3d(20px, 10px, 0) scale(.985); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 700px) {
+  .home-book-page.page-entering .hero-copy,
+  .home-book-page.page-entering .section-heading,
+  .home-book-page.page-entering .book-grid {
+    animation-duration: .46s;
+  }
+}

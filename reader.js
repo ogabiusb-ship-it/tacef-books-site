@@ -191,12 +191,12 @@ async function turnPage(nextPage, announce, direction) {
 
   try {
     bookLeaf.classList.add(outClass);
-    await wait(190);
+    await wait(240);
     commitPageChange(nextPage, announce);
     await renderPage({ quiet: true });
     bookLeaf.classList.remove(outClass);
     bookLeaf.classList.add(inClass);
-    await wait(330);
+    await wait(400);
   } finally {
     bookLeaf.classList.remove(outClass, inClass);
     isTurning = false;
