@@ -123,6 +123,9 @@
         updateHomePageControls();
       }, 70);
     }, { passive: true });
+    homeBook.addEventListener("wheel", (event) => {
+      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) event.preventDefault();
+    }, { passive: false });
     homeBook.addEventListener("touchstart", (event) => {
       if (event.touches.length !== 1 || !welcomeOverlay.hidden || document.querySelector("dialog[open]")) return;
       const touch = event.touches[0];
@@ -144,8 +147,8 @@
     window.addEventListener("resize", () => goHomePage(homePageIndex, false));
     window.addEventListener("keydown", (event) => {
       if (!welcomeOverlay.hidden || document.querySelector("dialog[open]") || event.target.closest?.("input, textarea, button, a")) return;
-      if (event.key === "ArrowLeft") { event.preventDefault(); goHomePage(homePageIndex - 1); }
-      if (event.key === "ArrowRight") { event.preventDefault(); goHomePage(homePageIndex + 1); }
+      if (event.key === "ArrowLeft") { event.preventDefault(); goHomePage(0); }
+      if (event.key === "ArrowRight") { event.preventDefault(); goHomePage(1); }
     });
     updateHomePageControls();
   }

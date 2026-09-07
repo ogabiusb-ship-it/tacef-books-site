@@ -1979,6 +1979,8 @@ body:not(.reader-body)[data-time-theme="afternoon"] .theme-toggle-track {
   color: #65501d;
   background: rgba(17, 31, 88, .1);
 }
+body[data-time-theme="morning"] .theme-toggle-moon,
+body[data-time-theme="afternoon"] .theme-toggle-moon { color: #58638d; }
 
 body:not(.reader-body)[data-time-theme="night"] {
   color: #f4f6ff;
@@ -2058,4 +2060,97 @@ body:not(.reader-body)[data-time-theme="night"] .book-kicker { color: #b6bfdf; }
   .reader-header-controls .theme-toggle-reader .theme-toggle-track { width: 34px; height: 28px; flex-basis: 34px; }
   .reader-header-controls .theme-toggle-reader .theme-toggle-track i { width: 22px; height: 22px; }
   .reader-header-controls .theme-toggle-reader.is-night .theme-toggle-track i { transform: translateX(6px); }
+}
+
+/* Release 21 — clean manual cards without the heavy dark cover band. */
+.home-library-page .book-cover::after { display: none; }
+.home-library-page .book-cover {
+  border-bottom: 1px solid rgba(17, 29, 82, .09);
+}
+.home-library-page .book-card {
+  border-color: rgba(21, 35, 91, .1);
+  box-shadow: 0 14px 36px rgba(24, 38, 87, .11);
+}
+.home-library-page .book-card:hover {
+  border-color: rgba(190, 24, 44, .18);
+  box-shadow: 0 22px 48px rgba(24, 38, 87, .16);
+}
+body:not(.reader-body)[data-time-theme="night"] .home-library-page .book-cover {
+  border-bottom-color: rgba(232, 208, 138, .12);
+}
+body:not(.reader-body)[data-time-theme="night"] .home-library-page .book-card {
+  border-color: rgba(232, 208, 138, .13);
+  box-shadow: 0 16px 40px rgba(0, 0, 22, .3);
+}
+
+/* Release 22 — complete reader themes and a clearer theme selector. */
+.theme-toggle {
+  min-width: 112px;
+  padding-right: 13px;
+  justify-content: flex-start;
+  overflow: visible;
+}
+.theme-toggle-track {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .1);
+}
+.theme-toggle-label { min-width: 32px; text-align: left; }
+
+.reader-body[data-time-theme="morning"],
+.reader-body[data-time-theme="afternoon"],
+.reader-body[data-time-theme="morning"] .reader-shell,
+.reader-body[data-time-theme="afternoon"] .reader-shell,
+.reader-body[data-time-theme="morning"] .pdf-stage,
+.reader-body[data-time-theme="afternoon"] .pdf-stage {
+  background: #fff !important;
+}
+.reader-body[data-time-theme="morning"] .pdf-stage::before,
+.reader-body[data-time-theme="afternoon"] .pdf-stage::before {
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(226, 190, 88, .08), transparent 30rem),
+    #fff !important;
+}
+.reader-body[data-time-theme="morning"] .reader-header,
+.reader-body[data-time-theme="afternoon"] .reader-header {
+  color: #111a4d;
+  background: rgba(255, 255, 255, .98);
+  border-bottom-color: rgba(17, 29, 82, .12);
+  box-shadow: 0 7px 24px rgba(22, 36, 84, .1);
+}
+.reader-body[data-time-theme="morning"] :is(.reader-back, .reader-title strong, .reader-header-controls button),
+.reader-body[data-time-theme="afternoon"] :is(.reader-back, .reader-title strong, .reader-header-controls button) { color: #111a4d; }
+.reader-body[data-time-theme="morning"] .reader-title small,
+.reader-body[data-time-theme="afternoon"] .reader-title small { color: #68718d; }
+.reader-body[data-time-theme="morning"] .book-frame,
+.reader-body[data-time-theme="afternoon"] .book-frame {
+  filter: drop-shadow(0 24px 38px rgba(27, 39, 77, .2));
+}
+.reader-body[data-time-theme="morning"] .page-turn-button,
+.reader-body[data-time-theme="afternoon"] .page-turn-button {
+  color: #111a4d;
+  background: rgba(255, 255, 255, .92);
+  border-color: rgba(17, 29, 82, .16);
+  box-shadow: 0 10px 26px rgba(24, 38, 87, .12);
+}
+.reader-body[data-time-theme="night"],
+.reader-body[data-time-theme="night"] .reader-shell,
+.reader-body[data-time-theme="night"] .pdf-stage {
+  background: #03051f !important;
+}
+.reader-body[data-time-theme="night"] .pdf-stage::before {
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 4%, rgba(58, 75, 171, .18), transparent 32rem),
+    linear-gradient(180deg, #0b1549 0%, #03051f 72%) !important;
+}
+
+@media (max-width: 940px) {
+  .theme-toggle { min-width: 50px; padding-right: 4px; }
+}
+
+@media (max-width: 700px) {
+  .reader-body[data-time-theme="morning"] .pdf-canvas-wrap,
+  .reader-body[data-time-theme="afternoon"] .pdf-canvas-wrap { padding-inline: 5px; }
+  .page-turn-button { display: none !important; }
 }

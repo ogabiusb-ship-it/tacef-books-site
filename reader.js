@@ -30,8 +30,6 @@ let renderSequence = 0;
 let totalPages = book.pages;
 let page = Math.min(totalPages, Math.max(1, Number(params.get("page")) || getSavedPage()));
 let isTurning = false;
-let wheelDistance = 0;
-let wheelResetTimer = null;
 let readingZoom = Number(localStorage.getItem(zoomKey)) || 1;
 let chromeTimer = null;
 
@@ -341,32 +339,6 @@ stage.addEventListener("touchend", (event) => {
 }, { passive: true });
 
 stage.addEventListener("touchcancel", () => { touchStart = null; }, { passive: true });
-
-stage.addEventListener("wheel", (event) => {
-  scheduleChromeHide();
-  if (event.ctrlKey || isTurning || document.querySelector("dialog[open]") || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-  const atTop = stage.scrollTop <= 2;
-  const atBottom = stage.scrollTop + stage.clientHeight >= stage.scrollHeight - 2;
-  const canTurnForward = event.deltaY > 0 && atBottom && page < totalPages;
-  const canTurnBackward = event.deltaY < 0 && atTop && page > 1;
-
-  if (!canTurnForward && !canTurnBackward) {
-    wheelDistance = 0;
-    return;
-  }
-
-  event.preventDefault();
-  wheelDistance += event.deltaY;
-  clearTimeout(wheelResetTimer);
-  wheelResetTimer = window.setTimeout(() => { wheelDistance = 0; }, 260);
-
-  if (Math.abs(wheelDistance) >= 120) {
-    const direction = wheelDistance > 0 ? 1 : -1;
-    wheelDistance = 0;
-    dismissGestureGuide();
-    openPage(page + direction, true);
-  }
-}, { passive: false });
 
 function getBookmarks() {
   const all = JSON.parse(localStorage.getItem(bookmarksKey) || "{}");

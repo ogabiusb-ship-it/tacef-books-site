@@ -14,11 +14,12 @@
     const isNight = theme === "night";
     document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
       const nextLabel = isNight ? "Light" : "Night";
+      const currentLabel = isNight ? "Night" : "Light";
       button.classList.toggle("is-night", isNight);
       button.setAttribute("aria-label", `Switch to ${nextLabel.toLowerCase()} theme`);
       button.setAttribute("title", `Switch to ${nextLabel.toLowerCase()} theme`);
       const label = button.querySelector(".theme-toggle-label");
-      if (label) label.textContent = nextLabel;
+      if (label) label.textContent = currentLabel;
     });
   }
 
