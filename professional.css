@@ -1894,10 +1894,168 @@ body:not(.reader-body)[data-time-theme="night"] .home-intro-page .hero-copy > p 
 }
 
 @media (max-width: 420px) {
+  .header-actions .profile-chip { display: none; }
   .brand { gap: 8px; }
   .brand .brand-copy small { display: none; }
   .brand .brand-copy strong { font-size: .72rem; }
   .brand .brand-emblem { width: 38px; height: 38px; flex-basis: 38px; }
   .brand .brand-emblem img { width: 33px; height: 33px; }
   #installButton { padding-inline: 10px; }
+}
+
+/* Release 20 — unified premium light/night system and persistent theme control. */
+:root {
+  --theme-ease: 520ms cubic-bezier(.2, .75, .2, 1);
+}
+
+body,
+.site-header,
+.home-book-page,
+.home-intro-page .hero,
+.book-card,
+.reader-header,
+.pdf-stage {
+  transition: color var(--theme-ease), background var(--theme-ease), border-color var(--theme-ease), box-shadow var(--theme-ease);
+}
+
+.theme-toggle {
+  min-width: 104px;
+  height: 40px;
+  padding: 4px 10px 4px 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+  background: rgba(255, 255, 255, .07);
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-size: .68rem;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+}
+.theme-toggle-track {
+  position: relative;
+  width: 48px;
+  height: 30px;
+  flex: 0 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  color: rgba(255, 255, 255, .72);
+  background: rgba(1, 5, 31, .32);
+  border-radius: 999px;
+  font-size: .72rem;
+}
+.theme-toggle-track i {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  background: #f3cd63;
+  border-radius: 50%;
+  box-shadow: 0 3px 10px rgba(4, 8, 40, .22);
+  transition: transform var(--theme-ease), background var(--theme-ease);
+}
+.theme-toggle-sun,
+.theme-toggle-moon { position: relative; z-index: 1; }
+.theme-toggle-moon { color: #d9e1ff; }
+.theme-toggle.is-night .theme-toggle-track i {
+  background: #eef2ff;
+  transform: translateX(18px);
+}
+
+body:not(.reader-body)[data-time-theme="morning"] .theme-toggle,
+body:not(.reader-body)[data-time-theme="afternoon"] .theme-toggle {
+  color: #172052;
+  background: rgba(17, 31, 88, .055);
+  border-color: rgba(17, 31, 88, .13);
+}
+body:not(.reader-body)[data-time-theme="morning"] .theme-toggle-track,
+body:not(.reader-body)[data-time-theme="afternoon"] .theme-toggle-track {
+  color: #65501d;
+  background: rgba(17, 31, 88, .1);
+}
+
+body:not(.reader-body)[data-time-theme="night"] {
+  color: #f4f6ff;
+  background: linear-gradient(155deg, #02051f 0%, #081044 52%, #030626 100%);
+}
+body:not(.reader-body)[data-time-theme="night"] .site-header {
+  color: #f7f4e8;
+  background: rgba(3, 7, 35, .94);
+  border-bottom-color: rgba(232, 208, 138, .16);
+}
+body:not(.reader-body)[data-time-theme="night"] .home-library-page {
+  background:
+    radial-gradient(circle at 82% 10%, rgba(220, 183, 78, .1), transparent 30rem),
+    linear-gradient(145deg, rgba(7, 12, 51, .98), rgba(2, 5, 31, .98));
+}
+body:not(.reader-body)[data-time-theme="night"] .section-heading h2,
+body:not(.reader-body)[data-time-theme="night"] .continue-panel h2 { color: #fff; }
+body:not(.reader-body)[data-time-theme="night"] .section-heading p,
+body:not(.reader-body)[data-time-theme="night"] .continue-panel p { color: #b9c1e1; }
+body:not(.reader-body)[data-time-theme="night"] .library-count {
+  color: #e9ddba;
+  background: rgba(255, 255, 255, .07);
+  border-color: rgba(232, 208, 138, .18);
+}
+body:not(.reader-body)[data-time-theme="night"] .book-card,
+body:not(.reader-body)[data-time-theme="night"] .continue-panel {
+  color: #eef1ff;
+  background: linear-gradient(155deg, rgba(17, 25, 77, .96), rgba(8, 13, 53, .98));
+  border-color: rgba(232, 208, 138, .16);
+  box-shadow: 0 22px 52px rgba(0, 0, 22, .38);
+}
+body:not(.reader-body)[data-time-theme="night"] .book-details h3 { color: #fff; }
+body:not(.reader-body)[data-time-theme="night"] .book-details p,
+body:not(.reader-body)[data-time-theme="night"] .book-kicker { color: #b6bfdf; }
+
+.reader-body[data-time-theme="morning"] .theme-toggle-reader,
+.reader-body[data-time-theme="afternoon"] .theme-toggle-reader {
+  color: #172155;
+  background: rgba(16, 28, 86, .055);
+  border-color: rgba(16, 28, 86, .12);
+}
+.reader-body[data-time-theme="morning"] .theme-toggle-track,
+.reader-body[data-time-theme="afternoon"] .theme-toggle-track {
+  color: #65501d;
+  background: rgba(17, 31, 88, .1);
+}
+.reader-body[data-time-theme="night"] .theme-toggle-reader {
+  color: #f5f1e3;
+  background: rgba(255, 255, 255, .07);
+  border-color: rgba(255, 255, 255, .13);
+}
+
+@media (max-width: 940px) {
+  .theme-toggle { min-width: 48px; padding: 4px; }
+  .theme-toggle-label { display: none; }
+}
+
+@media (max-width: 700px) {
+  .site-header .theme-toggle { min-width: 42px; width: 42px; height: 38px; padding: 4px; }
+  .site-header .theme-toggle-track { width: 32px; height: 28px; flex-basis: 32px; }
+  .site-header .theme-toggle-track i { width: 22px; height: 22px; }
+  .site-header .theme-toggle-sun,
+  .site-header .theme-toggle-moon { display: none; }
+  .site-header .theme-toggle.is-night .theme-toggle-track i { transform: translateX(4px); }
+  .site-header .theme-toggle:not(.is-night) .theme-toggle-track i::after { content: "☀"; }
+  .site-header .theme-toggle.is-night .theme-toggle-track i::after { content: "☾"; }
+  .site-header .theme-toggle-track i::after {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #11194b;
+    font-size: .72rem;
+    font-style: normal;
+  }
+  .reader-header-controls .theme-toggle-reader { min-width: 42px; width: 42px; height: 36px; padding: 3px; }
+  .reader-header-controls .theme-toggle-reader .theme-toggle-track { width: 34px; height: 28px; flex-basis: 34px; }
+  .reader-header-controls .theme-toggle-reader .theme-toggle-track i { width: 22px; height: 22px; }
+  .reader-header-controls .theme-toggle-reader.is-night .theme-toggle-track i { transform: translateX(6px); }
 }
