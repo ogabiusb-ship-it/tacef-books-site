@@ -189,7 +189,11 @@
       installInstructions.innerHTML = "<p>TACEF Books is already installed on this device and ready for full-screen reading.</p>";
       document.getElementById("dialogInstallButton").hidden = true;
     } else if (isIOS()) {
-      installInstructions.innerHTML = "<ol><li>Open this page in Safari.</li><li>Tap the <strong>Share</strong> button.</li><li>Select <strong>Add to Home Screen</strong>, then tap Add.</li></ol>";
+      installInstructions.innerHTML = `<div class="install-steps">
+        <div><b>1</b><span>Open this page in <strong>Safari</strong></span></div>
+        <div><b>2</b><span>Tap the <strong>Share</strong> button <i aria-hidden="true">⇧</i></span></div>
+        <div><b>3</b><span>Choose <strong>Add to Home Screen</strong>, then tap Add</span></div>
+      </div>`;
       document.getElementById("dialogInstallButton").hidden = true;
     } else if (!deferredInstallPrompt) {
       installInstructions.innerHTML = "<p>Open your browser menu and choose <strong>Install TACEF Books</strong> or <strong>Add to Home screen</strong>.</p>";
@@ -201,11 +205,20 @@
     installDialog.showModal();
   }
 
+  async function handleInstallClick() {
+    if (deferredInstallPrompt) {
+      await deferredInstallPrompt.prompt();
+      deferredInstallPrompt = null;
+      return;
+    }
+    showInstallDialog();
+  }
+
   window.addEventListener("beforeinstallprompt", (event) => { event.preventDefault(); deferredInstallPrompt = event; });
   window.addEventListener("appinstalled", () => { deferredInstallPrompt = null; showToast("TACEF Books has been installed."); installDialog.close(); });
   window.addEventListener("online", updateNetworkStatus);
   window.addEventListener("offline", updateNetworkStatus);
-  installButtons.forEach((button) => button.addEventListener("click", showInstallDialog));
+  installButtons.forEach((button) => button.addEventListener("click", handleInstallClick));
   document.getElementById("dialogInstallButton").addEventListener("click", async () => { if (!deferredInstallPrompt) return; await deferredInstallPrompt.prompt(); deferredInstallPrompt = null; });
   document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => button.closest("dialog").close()));
 
