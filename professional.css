@@ -2154,3 +2154,83 @@ body:not(.reader-body)[data-time-theme="night"] .home-library-page .book-card {
   .reader-body[data-time-theme="afternoon"] .pdf-canvas-wrap { padding-inline: 5px; }
   .page-turn-button { display: none !important; }
 }
+
+/* Release 23 — reliable offline manuals, equal mobile cards and refined motion. */
+.home-library-page .book-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 9px;
+}
+.home-library-page .book-actions .offline-save-button {
+  color: #111a4d;
+  background: transparent;
+  border: 1px solid rgba(17, 29, 82, .18);
+  box-shadow: none;
+}
+.home-library-page .book-actions .offline-save-button:hover {
+  background: rgba(17, 29, 82, .055);
+  border-color: rgba(17, 29, 82, .3);
+}
+.home-library-page .book-actions .offline-save-button.saved {
+  color: #126343;
+  background: rgba(22, 133, 88, .08);
+  border-color: rgba(22, 133, 88, .22);
+}
+.home-library-page .book-actions .offline-save-button.saving { opacity: .68; }
+body:not(.reader-body)[data-time-theme="night"] .book-actions .offline-save-button {
+  color: #eef1ff;
+  background: rgba(255, 255, 255, .055);
+  border-color: rgba(232, 208, 138, .17);
+}
+body:not(.reader-body)[data-time-theme="night"] .book-actions .offline-save-button.saved {
+  color: #9ae7c1;
+  background: rgba(51, 190, 126, .1);
+  border-color: rgba(85, 211, 151, .24);
+}
+
+.home-library-page .book-card {
+  animation: library-card-reveal .62s cubic-bezier(.2, .8, .2, 1) both;
+}
+.home-library-page .book-card:nth-child(2) { animation-delay: 90ms; }
+.home-library-page .book-card:nth-child(3) { animation-delay: 180ms; }
+.home-book-page { transition: opacity .35s ease; }
+.button { transition: transform .22s ease, box-shadow .28s ease, background .32s ease, border-color .32s ease, color .32s ease; }
+.button:active { transform: translateY(1px) scale(.985); }
+@keyframes library-card-reveal {
+  from { opacity: 0; transform: translateY(22px) scale(.985); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 940px) {
+  .home-library-page .book-card:last-child {
+    grid-column: auto;
+    width: 100%;
+    justify-self: stretch;
+  }
+}
+
+@media (max-width: 700px) {
+  .home-library-page .book-card,
+  .home-library-page .book-card:last-child {
+    width: 100%;
+    min-height: 0;
+    display: flex;
+    grid-template-columns: none;
+  }
+  .home-library-page .book-cover,
+  .home-library-page .book-card:last-child .book-cover {
+    width: 100%;
+    height: auto !important;
+    min-height: 0 !important;
+    aspect-ratio: 16 / 10;
+    flex: 0 0 auto;
+  }
+  .home-library-page .book-cover img { object-fit: cover; object-position: center; }
+  .home-library-page .book-details,
+  .home-library-page .book-card:last-child .book-details {
+    min-height: 220px;
+    padding: 20px;
+  }
+  .home-library-page .book-actions { grid-template-columns: 1fr; }
+  .home-library-page .book-actions .button { min-height: 48px; font-size: .76rem; }
+}

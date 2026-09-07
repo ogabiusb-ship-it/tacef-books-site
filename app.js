@@ -14,6 +14,7 @@
   const homeBook = document.getElementById("homeBook");
   const homePages = [...homeBook.querySelectorAll(":scope > .home-book-page")];
   const installButtons = [document.getElementById("installButton")].filter(Boolean);
+  const manualCacheName = "tacef-manuals-v1";
   let deferredInstallPrompt = null;
   let homePageIndex = 0;
 
@@ -168,10 +169,66 @@
           <div class="book-copy"><h3>${book.shortTitle}</h3><p>${book.description}</p></div>
           <div class="book-actions">
             <a class="button button-primary" href="${bookHref(book)}"><span>Open Week ${study.week}</span><b aria-hidden="true">→</b></a>
+            <button class="button button-secondary offline-save-button" type="button" data-save-offline="${book.id}"><span>Save offline</span><b aria-hidden="true">↓</b></button>
           </div>
         </div>
       </article>`;
     }).join("");
+  }
+
+  async function updateOfflineButton(button, book) {
+    if (!("caches" in window)) {
+      button.disabled = true;
+      button.querySelector("span").textContent = "Unavailable";
+      return;
+    }
+    const cache = await caches.open(manualCacheName);
+    const saved = Boolean(await cache.match(new URL(book.file, window.location.href).href));
+    button.classList.toggle("saved", saved);
+    button.querySelector("span").textContent = saved ? "Available offline" : "Save offline";
+    button.querySelector("b").textContent = saved ? "✓" : "↓";
+  }
+
+  async function saveManualOffline(button, book) {
+    if (!("caches" in window)) return showToast("Offline storage is not supported by this browser.");
+    if (!navigator.onLine) return showToast("Connect to the internet once to save this manual.");
+    const label = button.querySelector("span");
+    button.disabled = true;
+    button.classList.add("saving");
+    label.textContent = "Saving…";
+    try {
+      await navigator.storage?.persist?.();
+      const url = new URL(book.file, window.location.href).href;
+      const response = await fetch(url, { cache: "reload" });
+      if (!response.ok) throw new Error(`Download failed (${response.status})`);
+      const cache = await caches.open(manualCacheName);
+      await cache.put(url, response.clone());
+      button.classList.add("saved");
+      label.textContent = "Available offline";
+      button.querySelector("b").textContent = "✓";
+      showToast(`${book.shortTitle} is ready to read offline.`);
+    } catch (error) {
+      label.textContent = "Try again";
+      showToast("The manual could not be saved. Check your connection and storage space.");
+    } finally {
+      button.disabled = false;
+      button.classList.remove("saving");
+    }
+  }
+
+  function initOfflineControls() {
+    grid.querySelectorAll("[data-save-offline]").forEach((button) => {
+      const book = books.find((item) => item.id === button.dataset.saveOffline);
+      if (!book) return;
+      updateOfflineButton(button, book).catch(() => {});
+      button.addEventListener("click", () => {
+        if (button.classList.contains("saved")) {
+          showToast(`${book.shortTitle} is already available offline.`);
+          return;
+        }
+        saveManualOffline(button, book);
+      });
+    });
   }
 
   function renderContinueReading() {
@@ -250,6 +307,7 @@
   renderCurrentStudy();
   updateNetworkStatus();
   renderBooks();
+  initOfflineControls();
   renderContinueReading();
   initHomeBook();
   if (window.location.hash === "#library") goHomePage(1, false);
