@@ -12,6 +12,8 @@ const progressKey = "tacef-progress";
 const bookmarksKey = "tacef-bookmarks";
 const zoomKey = "tacef-reading-zoom";
 const zoomLevels = [0.82, 1, 1.24, 1.48];
+const isPhoneLayout = () => (window.visualViewport?.width || window.innerWidth) <= 700;
+const availableZoomLevels = () => isPhoneLayout() ? zoomLevels.filter((level) => level <= 1) : zoomLevels;
 const toast = document.getElementById("toast");
 const stage = document.querySelector(".pdf-stage");
 const canvasWrap = document.getElementById("pdfCanvasWrap");
@@ -34,6 +36,7 @@ let readingZoom = Number(localStorage.getItem(zoomKey)) || 1;
 let chromeTimer = null;
 
 readingZoom = zoomLevels.reduce((closest, value) => Math.abs(value - readingZoom) < Math.abs(closest - readingZoom) ? value : closest, 1);
+if (isPhoneLayout()) readingZoom = Math.min(readingZoom, 1);
 
 function getSavedPage() {
   const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
@@ -86,9 +89,10 @@ function updateWeekControls() {
 }
 
 function updateZoomControls() {
-  const index = zoomLevels.indexOf(readingZoom);
+  const levels = availableZoomLevels();
+  const index = levels.indexOf(readingZoom);
   document.getElementById("zoomOutButton").disabled = index <= 0;
-  document.getElementById("zoomInButton").disabled = index >= zoomLevels.length - 1;
+  document.getElementById("zoomInButton").disabled = index >= levels.length - 1;
   document.getElementById("zoomResetButton").classList.toggle("active", readingZoom === 1);
   document.getElementById("zoomResetButton").title = `${Math.round(readingZoom * 100)}%`;
 }
@@ -117,8 +121,10 @@ async function renderPage({ quiet = false } = {}) {
     if (sequence !== renderSequence) return;
 
     const baseViewport = pdfPage.getViewport({ scale: 1 });
-    const fitWidth = Math.max(260, Math.min(stage.clientWidth - (window.innerWidth < 700 ? 18 : 44), 1120));
-    const availableWidth = fitWidth * readingZoom;
+    const visualWidth = window.visualViewport?.width || document.documentElement.clientWidth || window.innerWidth;
+    const stageWidth = Math.min(stage.clientWidth || visualWidth, visualWidth);
+    const fitWidth = Math.max(240, Math.min(stageWidth - (isPhoneLayout() ? 32 : 44), 1120));
+    const availableWidth = fitWidth * (isPhoneLayout() ? Math.min(readingZoom, 1) : readingZoom);
     const viewport = pdfPage.getViewport({ scale: availableWidth / baseViewport.width });
     const outputScale = Math.min(window.devicePixelRatio || 1, 2.25);
     const context = canvas.getContext("2d", { alpha: false });
@@ -221,7 +227,8 @@ function openPage(nextPage, announce = false) {
 }
 
 function setReadingZoom(value) {
-  const nextZoom = zoomLevels.reduce((closest, level) => Math.abs(level - value) < Math.abs(closest - value) ? level : closest, 1);
+  const levels = availableZoomLevels();
+  const nextZoom = levels.reduce((closest, level) => Math.abs(level - value) < Math.abs(closest - value) ? level : closest, 1);
   if (nextZoom === readingZoom) return;
   readingZoom = nextZoom;
   localStorage.setItem(zoomKey, String(readingZoom));
@@ -398,9 +405,15 @@ document.getElementById("pageJumpForm").addEventListener("submit", submitPageReq
 document.getElementById("bookmarkButton").addEventListener("click", toggleBookmark);
 document.getElementById("bookmarksButton").addEventListener("click", showBookmarks);
 document.getElementById("weekMenuButton").addEventListener("click", showWeeks);
-document.getElementById("zoomOutButton").addEventListener("click", () => setReadingZoom(zoomLevels[Math.max(0, zoomLevels.indexOf(readingZoom) - 1)]));
+document.getElementById("zoomOutButton").addEventListener("click", () => {
+  const levels = availableZoomLevels();
+  setReadingZoom(levels[Math.max(0, levels.indexOf(readingZoom) - 1)]);
+});
 document.getElementById("zoomResetButton").addEventListener("click", () => setReadingZoom(1));
-document.getElementById("zoomInButton").addEventListener("click", () => setReadingZoom(zoomLevels[Math.min(zoomLevels.length - 1, zoomLevels.indexOf(readingZoom) + 1)]));
+document.getElementById("zoomInButton").addEventListener("click", () => {
+  const levels = availableZoomLevels();
+  setReadingZoom(levels[Math.min(levels.length - 1, levels.indexOf(readingZoom) + 1)]);
+});
 document.getElementById("fullscreenButton").addEventListener("click", toggleFullscreen);
 document.getElementById("retryReader").addEventListener("click", loadDocument);
 document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => { button.closest("dialog").close(); showReaderChrome(); }));
@@ -429,7 +442,14 @@ document.addEventListener("fullscreenchange", () => {
 let resizeTimer;
 window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => { if (pdfDocument) renderPage(); }, 220);
+  resizeTimer = setTimeout(() => {
+    if (isPhoneLayout() && readingZoom > 1) {
+      readingZoom = 1;
+      localStorage.setItem(zoomKey, String(readingZoom));
+      updateZoomControls();
+    }
+    if (pdfDocument) renderPage();
+  }, 220);
 });
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(() => {});
