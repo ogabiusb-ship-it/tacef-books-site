@@ -333,6 +333,113 @@ html { scroll-padding-top: 92px; }
   .reader-chrome-hidden .reader-tool-dock { transform: translateY(110%); }
 }
 
+/* Release 26 — anchored zoom, safer gestures and persistent page annotations. */
+.annotation-canvas {
+  position: absolute !important;
+  z-index: 2 !important;
+  inset: 0;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  pointer-events: none;
+  touch-action: none;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: inherit;
+  box-shadow: none !important;
+}
+
+.book-leaf.annotation-active .annotation-canvas {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+.book-leaf.annotation-active .annotation-canvas.eraser-active { cursor: cell; }
+.reader-body.annotation-mode .page-turn-button { pointer-events: none; opacity: .12; }
+.reader-header-controls .annotate-button { font-size: 1rem; }
+.reader-header-controls .annotate-button.active {
+  color: #fff;
+  background: #a61124;
+  border-color: #a61124;
+  box-shadow: 0 5px 14px rgba(166, 17, 36, .24);
+}
+
+.annotation-toolbar {
+  position: fixed;
+  z-index: 45;
+  top: 88px;
+  right: 18px;
+  max-width: min(720px, calc(100vw - 36px));
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  color: #111a4d;
+  background: rgba(252, 250, 243, .97);
+  border: 1px solid rgba(175, 137, 37, .35);
+  border-radius: 15px;
+  box-shadow: 0 16px 42px rgba(0, 0, 30, .28);
+  backdrop-filter: blur(18px) saturate(125%);
+}
+
+.annotation-toolbar button {
+  min-height: 36px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #172155;
+  background: rgba(16, 28, 86, .055);
+  border: 1px solid rgba(16, 28, 86, .12);
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: .7rem;
+  font-weight: 800;
+}
+
+.annotation-toolbar button:hover,
+.annotation-toolbar button.active { color: #8f0d1c; background: rgba(190, 26, 44, .085); border-color: rgba(190, 26, 44, .24); }
+.annotation-toolbar button:disabled { opacity: .4; cursor: default; }
+.annotation-toolbar .annotation-done { color: #fff; background: #111d5c; border-color: #111d5c; }
+.annotation-toolbar small { padding-inline: 5px; color: #6f7692; font-size: .58rem; white-space: nowrap; }
+.annotation-colour {
+  width: 36px;
+  height: 36px;
+  padding: 4px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: rgba(16, 28, 86, .055);
+  border: 1px solid rgba(16, 28, 86, .12);
+  border-radius: 9px;
+}
+.annotation-colour input { width: 28px; height: 28px; padding: 0; border: 0; background: transparent; cursor: pointer; }
+
+.reader-body[data-time-theme="night"] .annotation-toolbar {
+  color: #f5f1e5;
+  background: rgba(5, 9, 42, .97);
+  border-color: rgba(232, 208, 138, .24);
+}
+.reader-body[data-time-theme="night"] .annotation-toolbar button { color: #f5f1e5; background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.12); }
+.reader-body[data-time-theme="night"] .annotation-toolbar small { color: #b9c1df; }
+
+@media (max-width: 700px) {
+  .reader-header-controls .annotate-button { min-width: 34px; }
+  .annotation-toolbar {
+    top: 120px;
+    right: max(8px, env(safe-area-inset-right));
+    left: max(8px, env(safe-area-inset-left));
+    max-width: none;
+    justify-content: center;
+  }
+  .annotation-toolbar button { min-height: 38px; padding-inline: 9px; }
+  .annotation-toolbar button span { display: none; }
+  .annotation-toolbar small { flex-basis: 100%; text-align: center; }
+}
+
 @media (hover: none) {
   .book-card:hover { transform: none; }
 }

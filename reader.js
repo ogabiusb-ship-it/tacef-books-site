@@ -11,13 +11,19 @@ const weekTitles = window.TACEF_STUDY_SCHEDULE?.titles || [];
 const progressKey = "tacef-progress";
 const bookmarksKey = "tacef-bookmarks";
 const zoomKey = "tacef-reading-zoom";
-const zoomLevels = [0.82, 1, 1.24, 1.48];
+const viewStateKey = "tacef-reader-view-v1";
+const annotationsKey = "tacef-reader-annotations-v1";
+const zoomLevels = [0.82, 1, 1.2, 1.5, 1.85, 2.25, 2.75];
 const isPhoneLayout = () => (window.visualViewport?.width || window.innerWidth) <= 700;
 const availableZoomLevels = () => isPhoneLayout() ? zoomLevels.filter((level) => level <= 1) : zoomLevels;
 const toast = document.getElementById("toast");
 const stage = document.querySelector(".pdf-stage");
 const canvasWrap = document.getElementById("pdfCanvasWrap");
 const canvas = document.getElementById("pdfCanvas");
+const annotationCanvas = document.getElementById("annotationCanvas");
+const annotationContext = annotationCanvas.getContext("2d");
+const annotationToolbar = document.getElementById("annotationToolbar");
+const annotateButton = document.getElementById("annotateButton");
 const bookLeaf = document.getElementById("bookLeaf");
 const gestureGuide = document.getElementById("gestureGuide");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -34,9 +40,103 @@ let page = Math.min(totalPages, Math.max(1, Number(params.get("page")) || getSav
 let isTurning = false;
 let readingZoom = Number(localStorage.getItem(zoomKey)) || 1;
 let chromeTimer = null;
+let lastStagePointer = null;
+let restoreViewAfterRender = null;
+let annotationTool = "pen";
+let annotationEnabled = false;
+let drawingPointerId = null;
+let activeStroke = null;
+let pageStrokes = [];
+let viewSaveTimer = null;
 
 readingZoom = zoomLevels.reduce((closest, value) => Math.abs(value - readingZoom) < Math.abs(closest - readingZoom) ? value : closest, 1);
 if (isPhoneLayout()) readingZoom = Math.min(readingZoom, 1);
+
+function readStoredObject(key) {
+  try { return JSON.parse(localStorage.getItem(key) || "{}"); }
+  catch (_) { return {}; }
+}
+
+function writeStoredObject(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); return true; }
+  catch (_) { showToast("This device could not save the latest change."); return false; }
+}
+
+function getPageViewState(targetPage = page) {
+  return readStoredObject(viewStateKey)[book.id]?.[targetPage] || null;
+}
+
+function saveCurrentViewState() {
+  if (!pdfDocument || !canvas.offsetWidth) return;
+  const all = readStoredObject(viewStateKey);
+  const bookViews = all[book.id] || {};
+  const maxX = Math.max(0, stage.scrollWidth - stage.clientWidth);
+  const maxY = Math.max(0, stage.scrollHeight - stage.clientHeight);
+  bookViews[page] = {
+    zoom: readingZoom,
+    x: maxX ? stage.scrollLeft / maxX : 0.5,
+    y: maxY ? stage.scrollTop / maxY : 0,
+    updated: Date.now()
+  };
+  all[book.id] = bookViews;
+  writeStoredObject(viewStateKey, all);
+}
+
+function applyPageZoom(targetPage = page) {
+  const saved = getPageViewState(targetPage);
+  const requested = saved?.zoom || 1;
+  const levels = availableZoomLevels();
+  readingZoom = levels.reduce((closest, level) => Math.abs(level - requested) < Math.abs(closest - requested) ? level : closest, 1);
+  localStorage.setItem(zoomKey, String(readingZoom));
+}
+
+function captureViewAnchor(clientX, clientY) {
+  const rect = stage.getBoundingClientRect();
+  const x = Number.isFinite(clientX) ? clientX : (lastStagePointer?.x ?? rect.left + stage.clientWidth / 2);
+  const y = Number.isFinite(clientY) ? clientY : (lastStagePointer?.y ?? rect.top + stage.clientHeight / 2);
+  const offsetX = Math.max(0, Math.min(stage.clientWidth, x - rect.left));
+  const offsetY = Math.max(0, Math.min(stage.clientHeight, y - rect.top));
+  return {
+    kind: "anchor",
+    x: (stage.scrollLeft + offsetX) / Math.max(1, stage.scrollWidth),
+    y: (stage.scrollTop + offsetY) / Math.max(1, stage.scrollHeight),
+    offsetX,
+    offsetY
+  };
+}
+
+function restoreSavedView(state) {
+  requestAnimationFrame(() => {
+    if (state?.kind === "anchor") {
+      stage.scrollLeft = Math.max(0, state.x * stage.scrollWidth - state.offsetX);
+      stage.scrollTop = Math.max(0, state.y * stage.scrollHeight - state.offsetY);
+    } else if (state) {
+      const maxX = Math.max(0, stage.scrollWidth - stage.clientWidth);
+      const maxY = Math.max(0, stage.scrollHeight - stage.clientHeight);
+      stage.scrollLeft = Math.max(0, Math.min(maxX, (state.x ?? 0.5) * maxX));
+      stage.scrollTop = Math.max(0, Math.min(maxY, (state.y ?? 0) * maxY));
+    } else {
+      stage.scrollTo({ left: 0, top: 0, behavior: "auto" });
+    }
+    saveCurrentViewState();
+  });
+}
+
+function getAnnotations(targetPage = page) {
+  return readStoredObject(annotationsKey)[book.id]?.[targetPage] || [];
+}
+
+function saveAnnotations() {
+  const all = readStoredObject(annotationsKey);
+  const bookAnnotations = all[book.id] || {};
+  if (pageStrokes.length) bookAnnotations[page] = pageStrokes;
+  else delete bookAnnotations[page];
+  all[book.id] = bookAnnotations;
+  if (writeStoredObject(annotationsKey, all)) {
+    const status = document.getElementById("annotationSaveStatus");
+    status.textContent = "Saved on this device";
+  }
+}
 
 function getSavedPage() {
   const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
@@ -110,7 +210,161 @@ function updatePageControls() {
   updateZoomControls();
 }
 
-async function renderPage({ quiet = false } = {}) {
+function configureAnnotationCanvas() {
+  annotationCanvas.width = canvas.width;
+  annotationCanvas.height = canvas.height;
+  annotationCanvas.style.width = canvas.style.width;
+  annotationCanvas.style.height = canvas.style.height;
+}
+
+function drawStoredStroke(stroke) {
+  if (!stroke?.points?.length) return;
+  const points = stroke.points;
+  annotationContext.save();
+  annotationContext.lineCap = "round";
+  annotationContext.lineJoin = "round";
+  annotationContext.strokeStyle = stroke.color || "#d7192d";
+  annotationContext.globalAlpha = stroke.tool === "highlight" ? 0.3 : 0.92;
+  annotationContext.globalCompositeOperation = stroke.tool === "highlight" ? "multiply" : "source-over";
+  annotationContext.lineWidth = Math.max(2, (stroke.width || 0.0035) * annotationCanvas.width);
+  annotationContext.beginPath();
+  annotationContext.moveTo(points[0].x * annotationCanvas.width, points[0].y * annotationCanvas.height);
+  if (points.length === 1) {
+    annotationContext.lineTo(points[0].x * annotationCanvas.width + 0.01, points[0].y * annotationCanvas.height + 0.01);
+  } else {
+    for (let index = 1; index < points.length; index += 1) {
+      annotationContext.lineTo(points[index].x * annotationCanvas.width, points[index].y * annotationCanvas.height);
+    }
+  }
+  annotationContext.stroke();
+  annotationContext.restore();
+}
+
+function renderAnnotations() {
+  annotationContext.clearRect(0, 0, annotationCanvas.width, annotationCanvas.height);
+  pageStrokes.forEach(drawStoredStroke);
+}
+
+function loadPageAnnotations() {
+  pageStrokes = getAnnotations();
+  configureAnnotationCanvas();
+  renderAnnotations();
+  document.getElementById("undoAnnotation").disabled = pageStrokes.length === 0;
+  document.getElementById("clearAnnotations").disabled = pageStrokes.length === 0;
+}
+
+function annotationPoint(event) {
+  const rect = annotationCanvas.getBoundingClientRect();
+  return {
+    x: Math.max(0, Math.min(1, (event.clientX - rect.left) / Math.max(1, rect.width))),
+    y: Math.max(0, Math.min(1, (event.clientY - rect.top) / Math.max(1, rect.height)))
+  };
+}
+
+function distanceToSegment(point, start, end) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  if (!dx && !dy) return Math.hypot(point.x - start.x, point.y - start.y);
+  const amount = Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / (dx * dx + dy * dy)));
+  return Math.hypot(point.x - (start.x + amount * dx), point.y - (start.y + amount * dy));
+}
+
+function eraseAt(point) {
+  const before = pageStrokes.length;
+  pageStrokes = pageStrokes.filter((stroke) => {
+    const points = stroke.points || [];
+    const threshold = Math.max(0.018, (stroke.width || 0.004) * 1.4);
+    if (points.length === 1) return Math.hypot(point.x - points[0].x, point.y - points[0].y) > threshold;
+    for (let index = 1; index < points.length; index += 1) {
+      if (distanceToSegment(point, points[index - 1], points[index]) <= threshold) return false;
+    }
+    return true;
+  });
+  if (pageStrokes.length !== before) {
+    renderAnnotations();
+    saveAnnotations();
+    document.getElementById("undoAnnotation").disabled = pageStrokes.length === 0;
+    document.getElementById("clearAnnotations").disabled = pageStrokes.length === 0;
+  }
+}
+
+function selectAnnotationTool(tool) {
+  annotationTool = tool;
+  document.querySelectorAll("[data-annotation-tool]").forEach((button) => {
+    const selected = button.dataset.annotationTool === tool;
+    button.classList.toggle("active", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+  annotationCanvas.classList.toggle("eraser-active", tool === "eraser");
+}
+
+function setAnnotationEnabled(enabled) {
+  annotationEnabled = enabled;
+  annotateButton.classList.toggle("active", enabled);
+  annotateButton.setAttribute("aria-pressed", String(enabled));
+  annotationToolbar.classList.toggle("hidden", !enabled);
+  bookLeaf.classList.toggle("annotation-active", enabled);
+  document.body.classList.toggle("annotation-mode", enabled);
+  if (enabled) {
+    showReaderChrome();
+    document.getElementById("annotationSaveStatus").textContent = "Saved on this device";
+    showToast("Drawing mode: write or highlight this page.");
+  } else {
+    drawingPointerId = null;
+    activeStroke = null;
+    scheduleChromeHide();
+  }
+}
+
+annotationCanvas.addEventListener("pointerdown", (event) => {
+  if (!annotationEnabled || event.button > 0) return;
+  event.preventDefault();
+  event.stopPropagation();
+  annotationCanvas.setPointerCapture(event.pointerId);
+  drawingPointerId = event.pointerId;
+  const point = annotationPoint(event);
+  if (annotationTool === "eraser") { eraseAt(point); return; }
+  activeStroke = {
+    tool: annotationTool,
+    color: annotationTool === "highlight" ? "#ffe45c" : document.getElementById("annotationColour").value,
+    width: annotationTool === "highlight" ? 0.022 : 0.0035,
+    points: [point]
+  };
+  pageStrokes.push(activeStroke);
+  drawStoredStroke(activeStroke);
+}, { passive: false });
+
+annotationCanvas.addEventListener("pointermove", (event) => {
+  if (!annotationEnabled || drawingPointerId !== event.pointerId) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const point = annotationPoint(event);
+  if (annotationTool === "eraser") { eraseAt(point); return; }
+  if (!activeStroke) return;
+  const previous = activeStroke.points[activeStroke.points.length - 1];
+  if (Math.hypot(point.x - previous.x, point.y - previous.y) < 0.001) return;
+  activeStroke.points.push(point);
+  renderAnnotations();
+}, { passive: false });
+
+function finishAnnotationStroke(event) {
+  if (drawingPointerId !== event.pointerId) return;
+  event.preventDefault();
+  event.stopPropagation();
+  if (annotationCanvas.hasPointerCapture(event.pointerId)) annotationCanvas.releasePointerCapture(event.pointerId);
+  drawingPointerId = null;
+  if (activeStroke) {
+    activeStroke = null;
+    saveAnnotations();
+    document.getElementById("undoAnnotation").disabled = false;
+    document.getElementById("clearAnnotations").disabled = false;
+  }
+}
+
+annotationCanvas.addEventListener("pointerup", finishAnnotationStroke, { passive: false });
+annotationCanvas.addEventListener("pointercancel", finishAnnotationStroke, { passive: false });
+
+async function renderPage({ quiet = false, restore = null } = {}) {
   if (!pdfDocument) return;
   const sequence = ++renderSequence;
   if (renderTask) renderTask.cancel();
@@ -149,7 +403,10 @@ async function renderPage({ quiet = false } = {}) {
     canvasWrap.classList.remove("hidden");
     loading.classList.add("hidden");
     errorPanel.classList.add("hidden");
-    stage.scrollTo({ top: 0, behavior: "auto" });
+    loadPageAnnotations();
+    restoreViewAfterRender = restore || getPageViewState();
+    restoreSavedView(restoreViewAfterRender);
+    restoreViewAfterRender = null;
   } catch (error) {
     if (error?.name !== "RenderingCancelledException" && sequence === renderSequence) showReaderError(error);
   }
@@ -179,7 +436,9 @@ async function loadDocument() {
 }
 
 function commitPageChange(nextPage, announce) {
+  saveCurrentViewState();
   page = nextPage;
+  applyPageZoom(page);
   updatePageControls();
   saveProgress();
   updateBookmarkButton();
@@ -226,14 +485,14 @@ function openPage(nextPage, announce = false) {
   if (pdfDocument) renderPage();
 }
 
-function setReadingZoom(value) {
+function setReadingZoom(value, anchor = captureViewAnchor()) {
   const levels = availableZoomLevels();
   const nextZoom = levels.reduce((closest, level) => Math.abs(level - value) < Math.abs(closest - value) ? level : closest, 1);
   if (nextZoom === readingZoom) return;
   readingZoom = nextZoom;
   localStorage.setItem(zoomKey, String(readingZoom));
   updateZoomControls();
-  if (pdfDocument) renderPage({ quiet: true });
+  if (pdfDocument) renderPage({ quiet: true, restore: anchor });
   showToast(`Reading size ${Math.round(readingZoom * 100)}%`);
 }
 
@@ -261,7 +520,7 @@ function hideReaderChrome() {
   const focusedControl = document.activeElement?.closest?.(".reader-header, dialog");
   const keyboardFocus = focusedControl && document.activeElement.matches?.(":focus-visible");
   const hoveredControls = document.querySelector(".reader-header:hover");
-  if (document.querySelector("dialog[open]") || keyboardFocus || hoveredControls || isTurning) { scheduleChromeHide(); return; }
+  if (document.querySelector("dialog[open]") || keyboardFocus || hoveredControls || isTurning || annotationEnabled) { scheduleChromeHide(); return; }
   document.body.classList.add("reader-chrome-hidden");
 }
 
@@ -314,38 +573,92 @@ function dismissGestureGuide() {
 }
 
 let touchStart = null;
+let multiTouchGesture = false;
+let lastMultiTouchAt = 0;
+
+function isViewportZoomed() {
+  const viewportScale = window.visualViewport?.scale || 1;
+  return viewportScale > 1.02 || Date.now() - lastMultiTouchAt < 900;
+}
+
+function pageIsFittedForSwipe() {
+  const hasHorizontalOverflow = stage.scrollWidth > stage.clientWidth + 8;
+  return !annotationEnabled && !isViewportZoomed() && readingZoom <= 1.001 && !hasHorizontalOverflow;
+}
+
 stage.addEventListener("touchstart", (event) => {
-  if (event.touches.length !== 1 || document.querySelector("dialog[open]")) return;
+  if (event.touches.length > 1) {
+    multiTouchGesture = true;
+    lastMultiTouchAt = Date.now();
+    touchStart = null;
+    return;
+  }
+  if (event.touches.length !== 1 || multiTouchGesture || !pageIsFittedForSwipe() || document.querySelector("dialog[open]")) {
+    touchStart = null;
+    return;
+  }
   const touch = event.touches[0];
-  touchStart = { x: touch.clientX, y: touch.clientY, at: Date.now(), interactive: Boolean(event.target.closest?.("button, a, input")) };
+  touchStart = {
+    x: touch.clientX,
+    y: touch.clientY,
+    at: Date.now(),
+    maxX: 0,
+    maxY: 0,
+    edge: touch.clientX < 24 || touch.clientX > window.innerWidth - 24,
+    interactive: Boolean(event.target.closest?.("button, a, input, .annotation-toolbar, .annotation-canvas"))
+  };
   scheduleChromeHide();
 }, { passive: true });
 
 stage.addEventListener("touchmove", (event) => {
-  if (!touchStart || event.touches.length !== 1) return;
+  if (event.touches.length > 1) {
+    multiTouchGesture = true;
+    lastMultiTouchAt = Date.now();
+    touchStart = null;
+    return;
+  }
+  if (!touchStart || event.touches.length !== 1 || multiTouchGesture || !pageIsFittedForSwipe()) return;
   const touch = event.touches[0];
   const distanceX = touch.clientX - touchStart.x;
   const distanceY = touch.clientY - touchStart.y;
-  if (Math.abs(distanceX) > 12 && Math.abs(distanceX) > Math.abs(distanceY) * 1.1) event.preventDefault();
+  touchStart.maxX = Math.max(touchStart.maxX, Math.abs(distanceX));
+  touchStart.maxY = Math.max(touchStart.maxY, Math.abs(distanceY));
+  if (!touchStart.edge && Math.abs(distanceX) > 24 && Math.abs(distanceX) > Math.abs(distanceY) * 1.65) event.preventDefault();
 }, { passive: false });
 
 stage.addEventListener("touchend", (event) => {
+  if (multiTouchGesture) {
+    lastMultiTouchAt = Date.now();
+    touchStart = null;
+    if (event.touches.length === 0) multiTouchGesture = false;
+    return;
+  }
+  if (!pageIsFittedForSwipe()) { touchStart = null; return; }
   if (!touchStart || event.changedTouches.length !== 1 || isTurning) { touchStart = null; return; }
   const touch = event.changedTouches[0];
   const distanceX = touch.clientX - touchStart.x;
   const distanceY = touch.clientY - touchStart.y;
   const elapsed = Date.now() - touchStart.at;
   const interactive = touchStart.interactive;
+  const edge = touchStart.edge;
+  const maxY = touchStart.maxY;
   touchStart = null;
 
   if (interactive) { showReaderChrome(); return; }
   if (elapsed < 420 && Math.abs(distanceX) < 12 && Math.abs(distanceY) < 12) { toggleReaderChrome(); return; }
-  if (elapsed > 1200 || Math.abs(distanceX) < 38 || Math.abs(distanceX) < Math.abs(distanceY) * 1.1) return;
+  const horizontal = Math.abs(distanceX);
+  const vertical = Math.max(Math.abs(distanceY), maxY);
+  const velocity = horizontal / Math.max(1, elapsed);
+  if (edge || elapsed > 700 || horizontal < 64 || velocity < 0.16 || horizontal < vertical * 1.65) return;
   dismissGestureGuide();
   openPage(page + (distanceX < 0 ? 1 : -1), true);
 }, { passive: true });
 
-stage.addEventListener("touchcancel", () => { touchStart = null; }, { passive: true });
+stage.addEventListener("touchcancel", () => {
+  touchStart = null;
+  multiTouchGesture = false;
+  lastMultiTouchAt = Date.now();
+}, { passive: true });
 
 function getBookmarks() {
   const all = JSON.parse(localStorage.getItem(bookmarksKey) || "{}");
@@ -405,6 +718,27 @@ document.getElementById("pageJumpForm").addEventListener("submit", submitPageReq
 document.getElementById("bookmarkButton").addEventListener("click", toggleBookmark);
 document.getElementById("bookmarksButton").addEventListener("click", showBookmarks);
 document.getElementById("weekMenuButton").addEventListener("click", showWeeks);
+annotateButton.addEventListener("click", () => setAnnotationEnabled(!annotationEnabled));
+document.querySelectorAll("[data-annotation-tool]").forEach((button) => button.addEventListener("click", () => selectAnnotationTool(button.dataset.annotationTool)));
+document.getElementById("closeAnnotations").addEventListener("click", () => setAnnotationEnabled(false));
+document.getElementById("undoAnnotation").addEventListener("click", () => {
+  if (!pageStrokes.length) return;
+  pageStrokes.pop();
+  renderAnnotations();
+  saveAnnotations();
+  document.getElementById("undoAnnotation").disabled = pageStrokes.length === 0;
+  document.getElementById("clearAnnotations").disabled = pageStrokes.length === 0;
+  showToast("Last mark removed.");
+});
+document.getElementById("clearAnnotations").addEventListener("click", () => {
+  if (!pageStrokes.length || !window.confirm("Clear every drawing and highlight from this page?")) return;
+  pageStrokes = [];
+  renderAnnotations();
+  saveAnnotations();
+  document.getElementById("undoAnnotation").disabled = true;
+  document.getElementById("clearAnnotations").disabled = true;
+  showToast(`Page ${page} annotations cleared.`);
+});
 document.getElementById("zoomOutButton").addEventListener("click", () => {
   const levels = availableZoomLevels();
   setReadingZoom(levels[Math.max(0, levels.indexOf(readingZoom) - 1)]);
@@ -419,7 +753,12 @@ document.getElementById("retryReader").addEventListener("click", loadDocument);
 document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => { button.closest("dialog").close(); showReaderChrome(); }));
 window.addEventListener("keydown", (event) => {
   scheduleChromeHide();
-  if (event.target.matches("input") || document.querySelector("dialog[open]")) return;
+  if (event.target.matches("input, button, [contenteditable]") || document.querySelector("dialog[open]") || annotationEnabled) return;
+  if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && (readingZoom > 1.001 || stage.scrollWidth > stage.clientWidth + 8)) {
+    event.preventDefault();
+    stage.scrollBy({ left: event.key === "ArrowLeft" ? -120 : 120, behavior: "smooth" });
+    return;
+  }
   if (event.key === "ArrowLeft") openPage(page - 1);
   if (event.key === "ArrowRight") openPage(page + 1);
   if (event.key === "PageUp") openPage(page - 1);
@@ -428,6 +767,22 @@ window.addEventListener("keydown", (event) => {
 window.addEventListener("pointermove", (event) => {
   if (event.pointerType === "mouse" && event.clientY <= 96) showReaderChrome();
 });
+stage.addEventListener("pointermove", (event) => {
+  if (event.pointerType === "mouse" || event.pointerType === "pen") lastStagePointer = { x: event.clientX, y: event.clientY };
+}, { passive: true });
+stage.addEventListener("wheel", (event) => {
+  if (!(event.ctrlKey || event.metaKey) || annotationEnabled) return;
+  event.preventDefault();
+  lastStagePointer = { x: event.clientX, y: event.clientY };
+  const levels = availableZoomLevels();
+  const index = levels.indexOf(readingZoom);
+  const direction = event.deltaY < 0 ? 1 : -1;
+  setReadingZoom(levels[Math.max(0, Math.min(levels.length - 1, index + direction))], captureViewAnchor(event.clientX, event.clientY));
+}, { passive: false });
+stage.addEventListener("scroll", () => {
+  clearTimeout(viewSaveTimer);
+  viewSaveTimer = window.setTimeout(saveCurrentViewState, 180);
+}, { passive: true });
 document.querySelectorAll(".reader-header").forEach((element) => {
   element.addEventListener("pointerenter", showReaderChrome);
   element.addEventListener("focusin", showReaderChrome);
@@ -443,16 +798,24 @@ let resizeTimer;
 window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
+    const anchor = captureViewAnchor();
     if (isPhoneLayout() && readingZoom > 1) {
       readingZoom = 1;
       localStorage.setItem(zoomKey, String(readingZoom));
       updateZoomControls();
     }
-    if (pdfDocument) renderPage();
+    if (pdfDocument) renderPage({ quiet: true, restore: anchor });
   }, 220);
 });
 
+window.addEventListener("pagehide", () => {
+  saveCurrentViewState();
+  if (activeStroke) saveAnnotations();
+});
+
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+applyPageZoom(page);
+selectAnnotationTool("pen");
 openPage(page);
 loadDocument();
 if (!document.documentElement.requestFullscreen) document.getElementById("fullscreenButton").hidden = true;

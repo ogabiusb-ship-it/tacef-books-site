@@ -30,6 +30,7 @@
         <button id="pagePositionButton" type="button" aria-label="Go to page"><b id="currentPageNumber">1</b><span>/</span><b id="pageTotalNumber">—</b></button>
         <button id="bookmarkButton" type="button" aria-label="Bookmark this page" title="Bookmark this page">☆</button>
         <button id="bookmarksButton" type="button">Saved</button>
+        <button id="annotateButton" class="annotate-button" type="button" aria-label="Draw or highlight this page" title="Draw or highlight">✎</button>
         <div class="zoom-controls" role="group" aria-label="Page zoom">
           <button id="zoomOutButton" type="button" aria-label="Decrease text size">A−</button>
           <button id="zoomResetButton" type="button" aria-label="Reset text size">A</button>
@@ -58,18 +59,29 @@
             <div class="book-page-edge" aria-hidden="true"></div>
             <div class="book-leaf" id="bookLeaf">
               <canvas id="pdfCanvas" aria-label="Current manual page"></canvas>
+              <canvas id="annotationCanvas" class="annotation-canvas" aria-label="Page drawings and highlights"></canvas>
               <span class="page-light" aria-hidden="true"></span>
             </div>
             <span class="book-spine" aria-hidden="true"></span>
           </div>
         </div>
         <div class="gesture-guide" id="gestureGuide" role="status">
-          <span class="gesture-mobile">← Swipe sideways to turn the page →</span>
+          <span class="gesture-mobile">Pinch to zoom · Swipe sideways when the page is fitted</span>
           <span class="gesture-desktop">Use the left and right arrow keys to turn pages</span>
         </div>
         <div class="reading-progress" aria-label="Reading progress">
           <span><i id="readingProgressBar"></i></span>
           <small id="readingProgressText">Page 1</small>
+        </div>
+        <div class="annotation-toolbar hidden" id="annotationToolbar" role="toolbar" aria-label="Page drawing tools">
+          <button type="button" data-annotation-tool="pen" class="active" aria-pressed="true" title="Write or draw">✎ <span>Pen</span></button>
+          <button type="button" data-annotation-tool="highlight" aria-pressed="false" title="Highlight">▰ <span>Highlight</span></button>
+          <button type="button" data-annotation-tool="eraser" aria-pressed="false" title="Erase a mark">⌫ <span>Eraser</span></button>
+          <label class="annotation-colour" title="Pen colour"><span class="sr-only">Drawing colour</span><input id="annotationColour" type="color" value="#d7192d" /></label>
+          <button id="undoAnnotation" type="button" title="Undo last mark">↶ <span>Undo</span></button>
+          <button id="clearAnnotations" type="button" title="Clear this page">Clear</button>
+          <button id="closeAnnotations" type="button" class="annotation-done">Done</button>
+          <small id="annotationSaveStatus" aria-live="polite">Saved on this device</small>
         </div>
         <div class="reader-error hidden" id="readerError" role="alert">
           <strong>We could not display this page.</strong>
