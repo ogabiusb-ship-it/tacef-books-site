@@ -14,6 +14,7 @@ const zoomKey = "tacef-reading-zoom";
 const manualZoomKey = "tacef-reading-zoom-v2";
 const viewStateKey = "tacef-reader-view-v1";
 const annotationsKey = "tacef-reader-annotations-v1";
+const highlightColourKey = "tacef-highlighter-colour";
 const zoomLevels = [0.82, 1, 1.2, 1.5, 1.85, 2.25, 2.75, 3.25];
 const isPhoneLayout = () => (window.visualViewport?.width || window.innerWidth) <= 700;
 const availableZoomLevels = () => zoomLevels;
@@ -28,7 +29,7 @@ const annotateButton = document.getElementById("annotateButton");
 const bookLeaf = document.getElementById("bookLeaf");
 const gestureGuide = document.getElementById("gestureGuide");
 const edgeTurnHint = document.getElementById("edgeTurnHint");
-const moveViewBar = document.getElementById("moveViewBar");
+const highlightColours = document.getElementById("highlightColours");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const loading = document.getElementById("readerLoading");
 const loadingText = document.getElementById("readerLoadingText");
@@ -46,6 +47,7 @@ let chromeTimer = null;
 let lastStagePointer = null;
 let restoreViewAfterRender = null;
 let annotationTool = "pen";
+let highlightColour = localStorage.getItem(highlightColourKey) || "#f2c84b";
 let annotationEnabled = false;
 let drawingPointerId = null;
 let activeStroke = null;
@@ -217,7 +219,6 @@ function updateZoomControls() {
   resetButton.classList.toggle("active", readingZoom === 1);
   resetButton.textContent = `${Math.round(readingZoom * 100)}%`;
   resetButton.title = readingZoom === 1 ? "Page fitted to screen" : "Reset zoom to 100%";
-  moveViewBar.classList.toggle("hidden", readingZoom <= 1.001 || annotationEnabled);
   document.body.classList.toggle("reader-is-zoomed", readingZoom > 1.001);
 }
 
@@ -320,6 +321,17 @@ function selectAnnotationTool(tool) {
     button.setAttribute("aria-pressed", String(selected));
   });
   annotationCanvas.classList.toggle("eraser-active", tool === "eraser");
+  highlightColours.classList.toggle("visible", tool === "highlight");
+}
+
+function selectHighlightColour(colour) {
+  highlightColour = colour;
+  localStorage.setItem(highlightColourKey, colour);
+  document.querySelectorAll("[data-highlight-colour]").forEach((button) => {
+    const selected = button.dataset.highlightColour.toLowerCase() === colour.toLowerCase();
+    button.classList.toggle("active", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
 }
 
 function setAnnotationEnabled(enabled) {
@@ -329,7 +341,6 @@ function setAnnotationEnabled(enabled) {
   annotationToolbar.classList.toggle("hidden", !enabled);
   bookLeaf.classList.toggle("annotation-active", enabled);
   document.body.classList.toggle("annotation-mode", enabled);
-  moveViewBar.classList.toggle("hidden", enabled || readingZoom <= 1.001);
   if (enabled) {
     showReaderChrome();
     document.getElementById("annotationSaveStatus").textContent = "Saved on this device";
@@ -351,7 +362,7 @@ annotationCanvas.addEventListener("pointerdown", (event) => {
   if (annotationTool === "eraser") { eraseAt(point); return; }
   activeStroke = {
     tool: annotationTool,
-    color: annotationTool === "highlight" ? "#f2c84b" : document.getElementById("annotationColour").value,
+    color: annotationTool === "highlight" ? highlightColour : document.getElementById("annotationColour").value,
     width: annotationTool === "highlight" ? 0.024 : 0.0035,
     points: [point]
   };
@@ -849,6 +860,7 @@ document.getElementById("bookmarksButton").addEventListener("click", showBookmar
 document.getElementById("weekMenuButton").addEventListener("click", showWeeks);
 annotateButton.addEventListener("click", () => setAnnotationEnabled(!annotationEnabled));
 document.querySelectorAll("[data-annotation-tool]").forEach((button) => button.addEventListener("click", () => selectAnnotationTool(button.dataset.annotationTool)));
+document.querySelectorAll("[data-highlight-colour]").forEach((button) => button.addEventListener("click", () => selectHighlightColour(button.dataset.highlightColour)));
 document.getElementById("closeAnnotations").addEventListener("click", () => setAnnotationEnabled(false));
 document.getElementById("undoAnnotation").addEventListener("click", () => {
   if (!pageStrokes.length) return;
@@ -895,18 +907,16 @@ document.getElementById("optionsFullscreenButton").addEventListener("click", () 
   document.getElementById("readerOptionsDialog").close();
   toggleFullscreen();
 });
-document.getElementById("panLeftButton").addEventListener("click", () => stage.scrollBy({ left: -Math.max(180, stage.clientWidth * 0.62), behavior: "smooth" }));
-document.getElementById("panRightButton").addEventListener("click", () => stage.scrollBy({ left: Math.max(180, stage.clientWidth * 0.62), behavior: "smooth" }));
 document.getElementById("retryReader").addEventListener("click", loadDocument);
 document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => { button.closest("dialog").close(); showReaderChrome(); }));
 window.addEventListener("keydown", (event) => {
   scheduleChromeHide();
-  if (event.target.matches("input, button, [contenteditable]") || document.querySelector("dialog[open]") || annotationEnabled) return;
-  if (event.key === "ArrowLeft" || event.key === "PageUp") {
+  if (event.target.matches("input, textarea, select, [contenteditable]") || document.querySelector("dialog[open]")) return;
+  if (event.key === "ArrowLeft" || event.key === "ArrowUp" || event.key === "PageUp") {
     event.preventDefault();
     openPage(page - 1);
   }
-  if (event.key === "ArrowRight" || event.key === "PageDown") {
+  if (event.key === "ArrowRight" || event.key === "ArrowDown" || event.key === "PageDown") {
     event.preventDefault();
     openPage(page + 1);
   }
@@ -915,7 +925,7 @@ window.addEventListener("pointermove", (event) => {
   if (event.pointerType === "mouse" && event.clientY <= 96) showReaderChrome();
 });
 stage.addEventListener("pointerdown", (event) => {
-  if (event.pointerType !== "mouse" || event.button !== 0 || readingZoom <= 1.001 || annotationEnabled || event.target.closest?.("button, a, input, dialog, .annotation-toolbar")) return;
+  if (event.pointerType !== "mouse" || event.button !== 2 || readingZoom <= 1.001 || annotationEnabled || event.target.closest?.("button, a, input, dialog, .annotation-toolbar")) return;
   mousePan = { id: event.pointerId, x: event.clientX, y: event.clientY, scrollLeft: stage.scrollLeft, scrollTop: stage.scrollTop };
   stage.setPointerCapture(event.pointerId);
   stage.classList.add("dragging-page");
@@ -937,6 +947,10 @@ function finishMousePan(event) {
 }
 stage.addEventListener("pointerup", finishMousePan);
 stage.addEventListener("pointercancel", finishMousePan);
+stage.addEventListener("contextmenu", (event) => {
+  if (readingZoom <= 1.001 || annotationEnabled || event.target.closest?.("button, a, input, dialog, .annotation-toolbar")) return;
+  event.preventDefault();
+});
 stage.addEventListener("wheel", (event) => {
   if (!(event.ctrlKey || event.metaKey) || annotationEnabled) return;
   event.preventDefault();
@@ -984,6 +998,7 @@ window.addEventListener("pagehide", () => {
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(() => {});
 applyPageZoom(page);
+selectHighlightColour(highlightColour);
 selectAnnotationTool("pen");
 openPage(page);
 loadDocument();

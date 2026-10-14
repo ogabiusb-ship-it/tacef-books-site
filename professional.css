@@ -2937,4 +2937,114 @@ body:not(.reader-body)[data-time-theme="night"] .book-actions .offline-save-butt
   .reader-header-controls #zoomResetButton { min-width: 47px; font-size: .6rem; }
 }
 
+/* Release 38 — desktop right-drag, visible options and highlighter palette. */
+.move-view-bar { display: none !important; }
+
+.highlight-colours {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  background: rgba(7, 18, 63, .045);
+  border: 1px solid rgba(7, 18, 63, .11);
+  border-radius: 10px;
+}
+.highlight-colours.visible { display: flex; }
+.annotation-toolbar .highlight-colours button {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+.annotation-toolbar .highlight-colours button:hover,
+.annotation-toolbar .highlight-colours button.active {
+  background: #fff;
+  border-color: rgba(7, 18, 63, .24);
+  box-shadow: 0 0 0 2px rgba(201, 166, 70, .26);
+}
+.highlight-colours i {
+  width: 18px;
+  height: 18px;
+  display: block;
+  background: var(--highlight-colour);
+  border: 1px solid rgba(7, 18, 63, .16);
+  border-radius: 50%;
+  box-shadow: inset 0 1px rgba(255,255,255,.5);
+}
+
+.reader-options-dialog {
+  color: #10194f;
+  background: linear-gradient(155deg, #fffdf7, #f6f2e7);
+  border-color: rgba(201, 166, 70, .45);
+}
+.reader-options-dialog h2 { color: #07123f; }
+.reader-options-dialog .eyebrow { color: #886818; }
+.reader-options-dialog .dialog-close {
+  color: #07123f;
+  background: rgba(7, 18, 63, .06);
+  border-color: rgba(7, 18, 63, .12);
+}
+.reader-options-list > button {
+  color: #10194f;
+  background: rgba(255, 255, 255, .82);
+  border-color: rgba(141, 107, 26, .24);
+  box-shadow: 0 7px 18px rgba(7, 18, 63, .055);
+}
+.reader-options-list > button:hover {
+  color: #8e1020;
+  background: #fffaf0;
+  border-color: rgba(201, 166, 70, .58);
+}
+.reader-options-list b { color: inherit; }
+.reader-options-list small { color: #66708f; }
+
+.reader-body[data-time-theme="night"] .reader-options-dialog {
+  color: #f8f4e6;
+  background: linear-gradient(145deg, rgba(9, 17, 65, .99), rgba(3, 7, 35, .99));
+  border-color: rgba(201, 166, 70, .34);
+}
+.reader-body[data-time-theme="night"] .reader-options-dialog h2 { color: #fffaf0; }
+.reader-body[data-time-theme="night"] .reader-options-dialog .eyebrow { color: #e2c66f; }
+.reader-body[data-time-theme="night"] .reader-options-dialog .dialog-close {
+  color: #fffaf0;
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.14);
+}
+.reader-body[data-time-theme="night"] .reader-options-list > button {
+  color: #f8f4e6;
+  background: rgba(255,255,255,.07);
+  border-color: rgba(255,255,255,.13);
+  box-shadow: none;
+}
+.reader-body[data-time-theme="night"] .reader-options-list > button:hover {
+  background: rgba(201,166,70,.14);
+  border-color: rgba(201,166,70,.36);
+}
+.reader-body[data-time-theme="night"] .reader-options-list small { color: #b9c2e2; }
+.reader-body[data-time-theme="night"] .highlight-colours {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.13);
+}
+
+@media (pointer: fine) {
+  .reader-is-zoomed .pdf-stage:not(.dragging-page) { cursor: grab; }
+  .reader-is-zoomed .pdf-stage.dragging-page { cursor: grabbing; }
+}
+
+@media (max-width: 700px) {
+  .gesture-desktop { display: none !important; }
+  .gesture-mobile { display: inline !important; }
+  .annotation-toolbar .highlight-colours button {
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    min-height: 34px;
+  }
+  .reader-options-list > button { min-height: 68px; }
+}
+
 

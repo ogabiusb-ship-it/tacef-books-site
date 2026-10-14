@@ -15,14 +15,14 @@ lesson. The Living Book reader includes sharp adaptive PDF rendering,
 pinch/button zooming, edge-aware phone navigation, keyboard navigation, week
 navigation and animated page turns. At 100% a deliberate sideways swipe turns
 the page. When zoomed, one-finger movement pans across the page; after the
-reader reaches an edge, a further deliberate swipe turns the page. Left/right
-keyboard arrows and the visible page arrows always mean previous/next page. A
-separate Move View bar pans a zoomed page without changing pages.
+reader reaches an edge, a further deliberate swipe turns the page. On desktop,
+the arrow keys always turn pages and right-click dragging moves a zoomed page.
 
 Zoom is remembered per manual and applies to every page in that manual. Each
 page independently remembers its reading position, drawings and highlights.
-The reader includes pen, eraser and readable golden highlighting tools. A
-compact two-level phone header keeps the manual identity, week, high-contrast
+The reader includes pen, eraser and selectable gold, pink, green and blue
+highlighting tools. A compact two-level phone header keeps the manual identity,
+week, high-contrast
 page number, annotation and zoom controls visible without crowding; bookmarks,
 fullscreen and other secondary actions remain available in Reader options.
 The header uses African Church navy, TACEF red, ivory and restrained crest gold.

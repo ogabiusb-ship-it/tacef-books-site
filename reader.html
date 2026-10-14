@@ -70,14 +70,9 @@
         </div>
         <div class="gesture-guide" id="gestureGuide" role="status">
           <span class="gesture-mobile">Pinch to zoom · Drag to explore · Swipe again at the edge to turn</span>
-          <span class="gesture-desktop">Use the left and right arrow keys to turn pages</span>
+          <span class="gesture-desktop">Arrow keys turn pages · Right-click and drag when zoomed</span>
         </div>
         <div class="edge-turn-hint" id="edgeTurnHint" role="status" aria-live="polite"></div>
-        <div class="move-view-bar hidden" id="moveViewBar" aria-label="Move around the zoomed page">
-          <button id="panLeftButton" type="button" aria-label="Move view left">◀</button>
-          <span><b aria-hidden="true">✥</b> Drag page</span>
-          <button id="panRightButton" type="button" aria-label="Move view right">▶</button>
-        </div>
         <div class="reading-progress" aria-label="Reading progress">
           <span><i id="readingProgressBar"></i></span>
           <small id="readingProgressText">Page 1</small>
@@ -87,6 +82,12 @@
           <button type="button" data-annotation-tool="highlight" aria-pressed="false" title="Highlight">▰ <span>Highlight</span></button>
           <button type="button" data-annotation-tool="eraser" aria-pressed="false" title="Erase a mark">⌫ <span>Eraser</span></button>
           <label class="annotation-colour" title="Pen colour"><span class="sr-only">Drawing colour</span><input id="annotationColour" type="color" value="#d7192d" /></label>
+          <div class="highlight-colours" id="highlightColours" aria-label="Highlighter colour">
+            <button type="button" data-highlight-colour="#f2c84b" class="active" aria-label="Gold highlighter" aria-pressed="true"><i style="--highlight-colour:#f2c84b"></i></button>
+            <button type="button" data-highlight-colour="#ff8fa3" aria-label="Pink highlighter" aria-pressed="false"><i style="--highlight-colour:#ff8fa3"></i></button>
+            <button type="button" data-highlight-colour="#69d7a5" aria-label="Green highlighter" aria-pressed="false"><i style="--highlight-colour:#69d7a5"></i></button>
+            <button type="button" data-highlight-colour="#76b7ff" aria-label="Blue highlighter" aria-pressed="false"><i style="--highlight-colour:#76b7ff"></i></button>
+          </div>
           <button id="undoAnnotation" type="button" title="Undo last mark">↶ <span>Undo</span></button>
           <button id="clearAnnotations" type="button" title="Clear this page">Clear</button>
           <button id="closeAnnotations" type="button" class="annotation-done">Done</button>
