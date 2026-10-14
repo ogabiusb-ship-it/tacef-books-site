@@ -548,7 +548,7 @@ body {
 /* TACEF Living Book reader */
 .pdf-stage {
   overscroll-behavior: contain;
-  touch-action: pan-y pinch-zoom;
+  touch-action: pan-x pan-y pinch-zoom;
 }
 .pdf-stage::before {
   content: "";

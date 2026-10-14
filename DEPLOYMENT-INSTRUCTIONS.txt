@@ -11,14 +11,21 @@ The app is configured for the Firebase project "tacef-books-manual".
 The animated welcome book asks for the reader's name, remembers it only on that
 device and then presents all three manuals. Every manual opens at its verified
 page for the current week, while the home page previews the following week's
-lesson. The Living Book reader includes horizontal phone swipes, edge-aware
-mouse-wheel page turns, keyboard navigation, week navigation and animated page
-turns. The reader has no sidebar. A slim, calm header keeps the manual title and
-essential actions clear, while a fixed bottom control bar holds the current
-week, current page, week list, saved places, A-/A/A+ sizing and fullscreen.
-Nothing floats over the manual text. The header and bottom controls fade after
-8 seconds on computers and phones, with top-edge or tap reveal, remembered text
-sizing and fullscreen mode.
+lesson. The Living Book reader includes sharp adaptive PDF rendering,
+pinch/button zooming, edge-aware phone navigation, keyboard navigation, week
+navigation and animated page turns. At 100% a deliberate sideways swipe turns
+the page. When zoomed, one-finger movement pans across the page; after the
+reader reaches an edge, a further deliberate swipe turns the page. Left/right
+keyboard arrows and the visible page arrows always mean previous/next page. A
+separate Move View bar pans a zoomed page without changing pages.
+
+Zoom is remembered per manual and applies to every page in that manual. Each
+page independently remembers its reading position, drawings and highlights.
+The reader includes pen, eraser and readable golden highlighting tools. A
+compact two-level phone header keeps the manual identity, week, high-contrast
+page number, annotation and zoom controls visible without crowding; bookmarks,
+fullscreen and other secondary actions remain available in Reader options.
+The header uses African Church navy, TACEF red, ivory and restrained crest gold.
 The spiritual sky theme changes automatically using the reader's local time:
 sunrise and warm light from 5am, a calm blue daytime sky from noon, and a deep
 blue moonlit atmosphere from 6pm. Lightweight rays, clouds, stars and restrained

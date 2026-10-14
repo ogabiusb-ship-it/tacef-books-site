@@ -11,11 +11,12 @@ const weekTitles = window.TACEF_STUDY_SCHEDULE?.titles || [];
 const progressKey = "tacef-progress";
 const bookmarksKey = "tacef-bookmarks";
 const zoomKey = "tacef-reading-zoom";
+const manualZoomKey = "tacef-reading-zoom-v2";
 const viewStateKey = "tacef-reader-view-v1";
 const annotationsKey = "tacef-reader-annotations-v1";
-const zoomLevels = [0.82, 1, 1.2, 1.5, 1.85, 2.25, 2.75];
+const zoomLevels = [0.82, 1, 1.2, 1.5, 1.85, 2.25, 2.75, 3.25];
 const isPhoneLayout = () => (window.visualViewport?.width || window.innerWidth) <= 700;
-const availableZoomLevels = () => isPhoneLayout() ? zoomLevels.filter((level) => level <= 1) : zoomLevels;
+const availableZoomLevels = () => zoomLevels;
 const toast = document.getElementById("toast");
 const stage = document.querySelector(".pdf-stage");
 const canvasWrap = document.getElementById("pdfCanvasWrap");
@@ -26,6 +27,8 @@ const annotationToolbar = document.getElementById("annotationToolbar");
 const annotateButton = document.getElementById("annotateButton");
 const bookLeaf = document.getElementById("bookLeaf");
 const gestureGuide = document.getElementById("gestureGuide");
+const edgeTurnHint = document.getElementById("edgeTurnHint");
+const moveViewBar = document.getElementById("moveViewBar");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const loading = document.getElementById("readerLoading");
 const loadingText = document.getElementById("readerLoadingText");
@@ -38,7 +41,7 @@ let renderSequence = 0;
 let totalPages = book.pages;
 let page = Math.min(totalPages, Math.max(1, Number(params.get("page")) || getSavedPage()));
 let isTurning = false;
-let readingZoom = Number(localStorage.getItem(zoomKey)) || 1;
+let readingZoom = getManualZoom();
 let chromeTimer = null;
 let lastStagePointer = null;
 let restoreViewAfterRender = null;
@@ -48,9 +51,28 @@ let drawingPointerId = null;
 let activeStroke = null;
 let pageStrokes = [];
 let viewSaveTimer = null;
+let edgeHintTimer = null;
+let mousePan = null;
+let pinchGesture = null;
+let lastTrackedScrollLeft = 0;
 
 readingZoom = zoomLevels.reduce((closest, value) => Math.abs(value - readingZoom) < Math.abs(closest - readingZoom) ? value : closest, 1);
-if (isPhoneLayout()) readingZoom = Math.min(readingZoom, 1);
+
+function getManualZoom() {
+  try {
+    const manualZooms = JSON.parse(localStorage.getItem(manualZoomKey) || "{}");
+    return Number(manualZooms[book.id]) || Number(localStorage.getItem(zoomKey)) || 1;
+  } catch (_) {
+    return Number(localStorage.getItem(zoomKey)) || 1;
+  }
+}
+
+function saveManualZoom() {
+  const manualZooms = readStoredObject(manualZoomKey);
+  manualZooms[book.id] = readingZoom;
+  writeStoredObject(manualZoomKey, manualZooms);
+  localStorage.setItem(zoomKey, String(readingZoom));
+}
 
 function readStoredObject(key) {
   try { return JSON.parse(localStorage.getItem(key) || "{}"); }
@@ -73,7 +95,6 @@ function saveCurrentViewState() {
   const maxX = Math.max(0, stage.scrollWidth - stage.clientWidth);
   const maxY = Math.max(0, stage.scrollHeight - stage.clientHeight);
   bookViews[page] = {
-    zoom: readingZoom,
     x: maxX ? stage.scrollLeft / maxX : 0.5,
     y: maxY ? stage.scrollTop / maxY : 0,
     updated: Date.now()
@@ -83,11 +104,10 @@ function saveCurrentViewState() {
 }
 
 function applyPageZoom(targetPage = page) {
-  const saved = getPageViewState(targetPage);
-  const requested = saved?.zoom || 1;
+  const requested = getManualZoom();
   const levels = availableZoomLevels();
   readingZoom = levels.reduce((closest, level) => Math.abs(level - requested) < Math.abs(closest - requested) ? level : closest, 1);
-  localStorage.setItem(zoomKey, String(readingZoom));
+  saveManualZoom();
 }
 
 function captureViewAnchor(clientX, clientY) {
@@ -193,8 +213,12 @@ function updateZoomControls() {
   const index = levels.indexOf(readingZoom);
   document.getElementById("zoomOutButton").disabled = index <= 0;
   document.getElementById("zoomInButton").disabled = index >= levels.length - 1;
-  document.getElementById("zoomResetButton").classList.toggle("active", readingZoom === 1);
-  document.getElementById("zoomResetButton").title = `${Math.round(readingZoom * 100)}%`;
+  const resetButton = document.getElementById("zoomResetButton");
+  resetButton.classList.toggle("active", readingZoom === 1);
+  resetButton.textContent = `${Math.round(readingZoom * 100)}%`;
+  resetButton.title = readingZoom === 1 ? "Page fitted to screen" : "Reset zoom to 100%";
+  moveViewBar.classList.toggle("hidden", readingZoom <= 1.001 || annotationEnabled);
+  document.body.classList.toggle("reader-is-zoomed", readingZoom > 1.001);
 }
 
 function updatePageControls() {
@@ -224,7 +248,7 @@ function drawStoredStroke(stroke) {
   annotationContext.lineCap = "round";
   annotationContext.lineJoin = "round";
   annotationContext.strokeStyle = stroke.color || "#d7192d";
-  annotationContext.globalAlpha = stroke.tool === "highlight" ? 0.3 : 0.92;
+  annotationContext.globalAlpha = stroke.tool === "highlight" ? 0.4 : 0.92;
   annotationContext.globalCompositeOperation = stroke.tool === "highlight" ? "multiply" : "source-over";
   annotationContext.lineWidth = Math.max(2, (stroke.width || 0.0035) * annotationCanvas.width);
   annotationContext.beginPath();
@@ -305,6 +329,7 @@ function setAnnotationEnabled(enabled) {
   annotationToolbar.classList.toggle("hidden", !enabled);
   bookLeaf.classList.toggle("annotation-active", enabled);
   document.body.classList.toggle("annotation-mode", enabled);
+  moveViewBar.classList.toggle("hidden", enabled || readingZoom <= 1.001);
   if (enabled) {
     showReaderChrome();
     document.getElementById("annotationSaveStatus").textContent = "Saved on this device";
@@ -326,8 +351,8 @@ annotationCanvas.addEventListener("pointerdown", (event) => {
   if (annotationTool === "eraser") { eraseAt(point); return; }
   activeStroke = {
     tool: annotationTool,
-    color: annotationTool === "highlight" ? "#ffe45c" : document.getElementById("annotationColour").value,
-    width: annotationTool === "highlight" ? 0.022 : 0.0035,
+    color: annotationTool === "highlight" ? "#f2c84b" : document.getElementById("annotationColour").value,
+    width: annotationTool === "highlight" ? 0.024 : 0.0035,
     points: [point]
   };
   pageStrokes.push(activeStroke);
@@ -364,6 +389,13 @@ function finishAnnotationStroke(event) {
 annotationCanvas.addEventListener("pointerup", finishAnnotationStroke, { passive: false });
 annotationCanvas.addEventListener("pointercancel", finishAnnotationStroke, { passive: false });
 
+function adaptiveOutputScale(viewport) {
+  const deviceScale = Math.min(Math.max(window.devicePixelRatio || 1, 1), 3);
+  const pixelBudget = isPhoneLayout() ? 15000000 : 20000000;
+  const budgetScale = Math.sqrt(pixelBudget / Math.max(1, viewport.width * viewport.height));
+  return Math.max(1, Math.min(deviceScale, budgetScale));
+}
+
 async function renderPage({ quiet = false, restore = null } = {}) {
   if (!pdfDocument) return;
   const sequence = ++renderSequence;
@@ -378,9 +410,9 @@ async function renderPage({ quiet = false, restore = null } = {}) {
     const visualWidth = window.visualViewport?.width || document.documentElement.clientWidth || window.innerWidth;
     const stageWidth = Math.min(stage.clientWidth || visualWidth, visualWidth);
     const fitWidth = Math.max(240, Math.min(stageWidth - (isPhoneLayout() ? 32 : 44), 1120));
-    const availableWidth = fitWidth * (isPhoneLayout() ? Math.min(readingZoom, 1) : readingZoom);
+    const availableWidth = fitWidth * readingZoom;
     const viewport = pdfPage.getViewport({ scale: availableWidth / baseViewport.width });
-    const outputScale = Math.min(window.devicePixelRatio || 1, 2.25);
+    const outputScale = adaptiveOutputScale(viewport);
     const context = canvas.getContext("2d", { alpha: false });
 
     canvas.width = Math.floor(viewport.width * outputScale);
@@ -388,6 +420,8 @@ async function renderPage({ quiet = false, restore = null } = {}) {
     canvas.style.width = `${Math.floor(viewport.width)}px`;
     canvas.style.height = `${Math.floor(viewport.height)}px`;
     context.save();
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
     context.fillStyle = "#ffffff";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.restore();
@@ -421,7 +455,7 @@ async function loadDocument() {
   setLoading("Preparing the manual…");
 
   try {
-    loadingTask = getDocument({ url: book.file });
+    loadingTask = getDocument({ url: book.file, useSystemFonts: true });
     loadingTask.onProgress = ({ loaded, total }) => {
       if (total > 0) loadingText.textContent = `Loading manual… ${Math.min(100, Math.round((loaded / total) * 100))}%`;
     };
@@ -490,10 +524,11 @@ function setReadingZoom(value, anchor = captureViewAnchor()) {
   const nextZoom = levels.reduce((closest, level) => Math.abs(level - value) < Math.abs(closest - value) ? level : closest, 1);
   if (nextZoom === readingZoom) return;
   readingZoom = nextZoom;
-  localStorage.setItem(zoomKey, String(readingZoom));
+  saveManualZoom();
+  clearEdgeTurnHint();
   updateZoomControls();
   if (pdfDocument) renderPage({ quiet: true, restore: anchor });
-  showToast(`Reading size ${Math.round(readingZoom * 100)}%`);
+  showToast(`Zoom ${Math.round(readingZoom * 100)}% · applies to every page in this manual`);
 }
 
 function showWeeks() {
@@ -576,24 +611,60 @@ let touchStart = null;
 let multiTouchGesture = false;
 let lastMultiTouchAt = 0;
 
-function isViewportZoomed() {
-  const viewportScale = window.visualViewport?.scale || 1;
-  return viewportScale > 1.02 || Date.now() - lastMultiTouchAt < 900;
+function touchDistance(touches) {
+  if (touches.length < 2) return 0;
+  return Math.hypot(touches[1].clientX - touches[0].clientX, touches[1].clientY - touches[0].clientY);
 }
 
-function pageIsFittedForSwipe() {
-  const hasHorizontalOverflow = stage.scrollWidth > stage.clientWidth + 8;
-  return !annotationEnabled && !isViewportZoomed() && readingZoom <= 1.001 && !hasHorizontalOverflow;
+function clearEdgeTurnHint() {
+  clearTimeout(edgeHintTimer);
+  edgeTurnHint.classList.remove("visible", "previous", "next", "zoom-preview");
+  edgeTurnHint.textContent = "";
+}
+
+function showEdgeTurnHint(direction, message) {
+  clearTimeout(edgeHintTimer);
+  edgeTurnHint.textContent = message || (direction === "next"
+    ? "End of page · Swipe left again for the next page →"
+    : "← Start of page · Swipe right again for the previous page");
+  edgeTurnHint.classList.remove("previous", "next", "zoom-preview");
+  if (direction) edgeTurnHint.classList.add(direction);
+  edgeTurnHint.classList.add("visible");
+  edgeHintTimer = window.setTimeout(clearEdgeTurnHint, 2400);
+}
+
+function atHorizontalBoundary(direction) {
+  if (direction === "next") return stage.scrollLeft + stage.clientWidth >= stage.scrollWidth - 5;
+  return stage.scrollLeft <= 5;
+}
+
+function deliberateHorizontalSwipe(distanceX, distanceY, elapsed) {
+  const horizontal = Math.abs(distanceX);
+  return elapsed <= 950 && horizontal >= 66 && horizontal >= Math.abs(distanceY) * 1.5;
 }
 
 stage.addEventListener("touchstart", (event) => {
-  if (event.touches.length > 1) {
-    multiTouchGesture = true;
-    lastMultiTouchAt = Date.now();
+  if (annotationEnabled || document.querySelector("dialog[open]")) {
     touchStart = null;
     return;
   }
-  if (event.touches.length !== 1 || multiTouchGesture || !pageIsFittedForSwipe() || document.querySelector("dialog[open]")) {
+  if (event.touches.length > 1) {
+    event.preventDefault();
+    multiTouchGesture = true;
+    lastMultiTouchAt = Date.now();
+    touchStart = null;
+    const midpointX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
+    const midpointY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+    pinchGesture = {
+      startDistance: Math.max(1, touchDistance(event.touches)),
+      startZoom: readingZoom,
+      previewZoom: readingZoom,
+      anchor: captureViewAnchor(midpointX, midpointY)
+    };
+    bookFrame.classList.add("pinch-preview");
+    return;
+  }
+  if (event.touches.length !== 1 || multiTouchGesture) {
     touchStart = null;
     return;
   }
@@ -604,60 +675,113 @@ stage.addEventListener("touchstart", (event) => {
     at: Date.now(),
     maxX: 0,
     maxY: 0,
-    edge: touch.clientX < 24 || touch.clientX > window.innerWidth - 24,
+    systemEdge: touch.clientX < 18 || touch.clientX > window.innerWidth - 18,
+    atLeftBoundary: atHorizontalBoundary("previous"),
+    atRightBoundary: atHorizontalBoundary("next"),
     interactive: Boolean(event.target.closest?.("button, a, input, .annotation-toolbar, .annotation-canvas"))
   };
   scheduleChromeHide();
-}, { passive: true });
+}, { passive: false });
 
 stage.addEventListener("touchmove", (event) => {
   if (event.touches.length > 1) {
+    event.preventDefault();
     multiTouchGesture = true;
     lastMultiTouchAt = Date.now();
     touchStart = null;
+    if (!pinchGesture) {
+      pinchGesture = {
+        startDistance: Math.max(1, touchDistance(event.touches)),
+        startZoom: readingZoom,
+        previewZoom: readingZoom,
+        anchor: captureViewAnchor()
+      };
+    }
+    const ratio = touchDistance(event.touches) / pinchGesture.startDistance;
+    pinchGesture.previewZoom = Math.max(zoomLevels[0], Math.min(zoomLevels[zoomLevels.length - 1], pinchGesture.startZoom * ratio));
+    const previewScale = pinchGesture.previewZoom / pinchGesture.startZoom;
+    bookFrame.style.transform = `scale(${previewScale})`;
+    const midpointX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
+    const midpointY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+    const rect = bookFrame.getBoundingClientRect();
+    bookFrame.style.transformOrigin = `${Math.max(0, Math.min(100, ((midpointX - rect.left) / Math.max(1, rect.width)) * 100))}% ${Math.max(0, Math.min(100, ((midpointY - rect.top) / Math.max(1, rect.height)) * 100))}%`;
+    showEdgeTurnHint(null, `Zoom ${Math.round(pinchGesture.previewZoom * 100)}%`);
+    edgeTurnHint.classList.add("zoom-preview");
     return;
   }
-  if (!touchStart || event.touches.length !== 1 || multiTouchGesture || !pageIsFittedForSwipe()) return;
+  if (!touchStart || event.touches.length !== 1 || multiTouchGesture) return;
   const touch = event.touches[0];
   const distanceX = touch.clientX - touchStart.x;
   const distanceY = touch.clientY - touchStart.y;
   touchStart.maxX = Math.max(touchStart.maxX, Math.abs(distanceX));
   touchStart.maxY = Math.max(touchStart.maxY, Math.abs(distanceY));
-  if (!touchStart.edge && Math.abs(distanceX) > 24 && Math.abs(distanceX) > Math.abs(distanceY) * 1.65) event.preventDefault();
+  if (readingZoom <= 1.001 && !touchStart.systemEdge && Math.abs(distanceX) > 24 && Math.abs(distanceX) > Math.abs(distanceY) * 1.5) event.preventDefault();
 }, { passive: false });
 
 stage.addEventListener("touchend", (event) => {
   if (multiTouchGesture) {
     lastMultiTouchAt = Date.now();
     touchStart = null;
-    if (event.touches.length === 0) multiTouchGesture = false;
+    if (event.touches.length === 0) {
+      multiTouchGesture = false;
+      bookFrame.classList.remove("pinch-preview");
+      bookFrame.style.transform = "";
+      bookFrame.style.transformOrigin = "";
+      if (pinchGesture) {
+        const finalZoom = pinchGesture.previewZoom;
+        const anchor = pinchGesture.anchor;
+        pinchGesture = null;
+        clearEdgeTurnHint();
+        setReadingZoom(finalZoom, anchor);
+      }
+    }
     return;
   }
-  if (!pageIsFittedForSwipe()) { touchStart = null; return; }
   if (!touchStart || event.changedTouches.length !== 1 || isTurning) { touchStart = null; return; }
   const touch = event.changedTouches[0];
   const distanceX = touch.clientX - touchStart.x;
   const distanceY = touch.clientY - touchStart.y;
   const elapsed = Date.now() - touchStart.at;
   const interactive = touchStart.interactive;
-  const edge = touchStart.edge;
+  const systemEdge = touchStart.systemEdge;
   const maxY = touchStart.maxY;
+  const startedLeft = touchStart.atLeftBoundary;
+  const startedRight = touchStart.atRightBoundary;
   touchStart = null;
 
   if (interactive) { showReaderChrome(); return; }
   if (elapsed < 420 && Math.abs(distanceX) < 12 && Math.abs(distanceY) < 12) { toggleReaderChrome(); return; }
-  const horizontal = Math.abs(distanceX);
   const vertical = Math.max(Math.abs(distanceY), maxY);
-  const velocity = horizontal / Math.max(1, elapsed);
-  if (edge || elapsed > 700 || horizontal < 64 || velocity < 0.16 || horizontal < vertical * 1.65) return;
+  if (systemEdge || !deliberateHorizontalSwipe(distanceX, vertical, elapsed)) return;
   dismissGestureGuide();
-  openPage(page + (distanceX < 0 ? 1 : -1), true);
+  if (readingZoom <= 1.001) {
+    openPage(page + (distanceX < 0 ? 1 : -1), true);
+    return;
+  }
+
+  if (distanceX < 0 && startedRight && atHorizontalBoundary("next")) {
+    clearEdgeTurnHint();
+    openPage(page + 1, true);
+    return;
+  }
+  if (distanceX > 0 && startedLeft && atHorizontalBoundary("previous")) {
+    clearEdgeTurnHint();
+    openPage(page - 1, true);
+    return;
+  }
+
+  if (atHorizontalBoundary("next")) showEdgeTurnHint("next");
+  else if (atHorizontalBoundary("previous")) showEdgeTurnHint("previous");
 }, { passive: true });
 
 stage.addEventListener("touchcancel", () => {
   touchStart = null;
   multiTouchGesture = false;
   lastMultiTouchAt = Date.now();
+  pinchGesture = null;
+  bookFrame.classList.remove("pinch-preview");
+  bookFrame.style.transform = "";
+  bookFrame.style.transformOrigin = "";
 }, { passive: true });
 
 function getBookmarks() {
@@ -677,6 +801,11 @@ function updateBookmarkButton() {
   button.textContent = marked ? "★" : "☆";
   button.classList.toggle("active", marked);
   button.setAttribute("aria-label", marked ? "Remove bookmark from this page" : "Bookmark this page");
+  const optionsButton = document.getElementById("optionsBookmarkButton");
+  if (optionsButton) {
+    optionsButton.querySelector("span").textContent = marked ? "★" : "☆";
+    optionsButton.querySelector("b").textContent = marked ? "Remove bookmark" : "Bookmark this page";
+  }
 }
 
 function toggleBookmark() {
@@ -749,27 +878,65 @@ document.getElementById("zoomInButton").addEventListener("click", () => {
   setReadingZoom(levels[Math.min(levels.length - 1, levels.indexOf(readingZoom) + 1)]);
 });
 document.getElementById("fullscreenButton").addEventListener("click", toggleFullscreen);
+document.getElementById("readerMoreButton").addEventListener("click", () => document.getElementById("readerOptionsDialog").showModal());
+document.getElementById("optionsBookmarkButton").addEventListener("click", () => {
+  toggleBookmark();
+  document.getElementById("readerOptionsDialog").close();
+});
+document.getElementById("optionsSavedButton").addEventListener("click", () => {
+  document.getElementById("readerOptionsDialog").close();
+  showBookmarks();
+});
+document.getElementById("optionsResetZoomButton").addEventListener("click", () => {
+  document.getElementById("readerOptionsDialog").close();
+  setReadingZoom(1);
+});
+document.getElementById("optionsFullscreenButton").addEventListener("click", () => {
+  document.getElementById("readerOptionsDialog").close();
+  toggleFullscreen();
+});
+document.getElementById("panLeftButton").addEventListener("click", () => stage.scrollBy({ left: -Math.max(180, stage.clientWidth * 0.62), behavior: "smooth" }));
+document.getElementById("panRightButton").addEventListener("click", () => stage.scrollBy({ left: Math.max(180, stage.clientWidth * 0.62), behavior: "smooth" }));
 document.getElementById("retryReader").addEventListener("click", loadDocument);
 document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => { button.closest("dialog").close(); showReaderChrome(); }));
 window.addEventListener("keydown", (event) => {
   scheduleChromeHide();
   if (event.target.matches("input, button, [contenteditable]") || document.querySelector("dialog[open]") || annotationEnabled) return;
-  if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && (readingZoom > 1.001 || stage.scrollWidth > stage.clientWidth + 8)) {
+  if (event.key === "ArrowLeft" || event.key === "PageUp") {
     event.preventDefault();
-    stage.scrollBy({ left: event.key === "ArrowLeft" ? -120 : 120, behavior: "smooth" });
-    return;
+    openPage(page - 1);
   }
-  if (event.key === "ArrowLeft") openPage(page - 1);
-  if (event.key === "ArrowRight") openPage(page + 1);
-  if (event.key === "PageUp") openPage(page - 1);
-  if (event.key === "PageDown") openPage(page + 1);
+  if (event.key === "ArrowRight" || event.key === "PageDown") {
+    event.preventDefault();
+    openPage(page + 1);
+  }
 });
 window.addEventListener("pointermove", (event) => {
   if (event.pointerType === "mouse" && event.clientY <= 96) showReaderChrome();
 });
+stage.addEventListener("pointerdown", (event) => {
+  if (event.pointerType !== "mouse" || event.button !== 0 || readingZoom <= 1.001 || annotationEnabled || event.target.closest?.("button, a, input, dialog, .annotation-toolbar")) return;
+  mousePan = { id: event.pointerId, x: event.clientX, y: event.clientY, scrollLeft: stage.scrollLeft, scrollTop: stage.scrollTop };
+  stage.setPointerCapture(event.pointerId);
+  stage.classList.add("dragging-page");
+  event.preventDefault();
+});
 stage.addEventListener("pointermove", (event) => {
   if (event.pointerType === "mouse" || event.pointerType === "pen") lastStagePointer = { x: event.clientX, y: event.clientY };
-}, { passive: true });
+  if (!mousePan || mousePan.id !== event.pointerId) return;
+  stage.scrollLeft = mousePan.scrollLeft - (event.clientX - mousePan.x);
+  stage.scrollTop = mousePan.scrollTop - (event.clientY - mousePan.y);
+  event.preventDefault();
+});
+function finishMousePan(event) {
+  if (!mousePan || mousePan.id !== event.pointerId) return;
+  if (stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
+  mousePan = null;
+  stage.classList.remove("dragging-page");
+  saveCurrentViewState();
+}
+stage.addEventListener("pointerup", finishMousePan);
+stage.addEventListener("pointercancel", finishMousePan);
 stage.addEventListener("wheel", (event) => {
   if (!(event.ctrlKey || event.metaKey) || annotationEnabled) return;
   event.preventDefault();
@@ -782,6 +949,13 @@ stage.addEventListener("wheel", (event) => {
 stage.addEventListener("scroll", () => {
   clearTimeout(viewSaveTimer);
   viewSaveTimer = window.setTimeout(saveCurrentViewState, 180);
+  const horizontalMovement = Math.abs(stage.scrollLeft - lastTrackedScrollLeft);
+  lastTrackedScrollLeft = stage.scrollLeft;
+  if (horizontalMovement > 2 && readingZoom > 1.001 && !annotationEnabled && !multiTouchGesture) {
+    if (atHorizontalBoundary("next")) showEdgeTurnHint("next");
+    else if (atHorizontalBoundary("previous")) showEdgeTurnHint("previous");
+    else clearEdgeTurnHint();
+  }
 }, { passive: true });
 document.querySelectorAll(".reader-header").forEach((element) => {
   element.addEventListener("pointerenter", showReaderChrome);
@@ -799,11 +973,6 @@ window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
     const anchor = captureViewAnchor();
-    if (isPhoneLayout() && readingZoom > 1) {
-      readingZoom = 1;
-      localStorage.setItem(zoomKey, String(readingZoom));
-      updateZoomControls();
-    }
     if (pdfDocument) renderPage({ quiet: true, restore: anchor });
   }, 220);
 });

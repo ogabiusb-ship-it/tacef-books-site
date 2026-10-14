@@ -33,14 +33,17 @@
         <button id="annotateButton" class="annotate-button" type="button" aria-label="Draw or highlight this page" title="Draw or highlight">✎</button>
         <div class="zoom-controls" role="group" aria-label="Page zoom">
           <button id="zoomOutButton" type="button" aria-label="Decrease text size">A−</button>
-          <button id="zoomResetButton" type="button" aria-label="Reset text size">A</button>
+          <button id="zoomResetButton" type="button" aria-label="Reset text size">100%</button>
           <button id="zoomInButton" type="button" aria-label="Increase text size">A+</button>
         </div>
+      </div>
+      <div class="reader-top-actions" aria-label="Reader options">
         <button class="theme-toggle theme-toggle-reader" type="button" data-theme-toggle aria-label="Switch to night theme" title="Switch to night theme">
           <span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-sun">☀</span><span class="theme-toggle-moon">☾</span><i></i></span>
           <span class="theme-toggle-label">Night</span>
         </button>
         <button class="fullscreen-button" id="fullscreenButton" type="button" aria-label="Enter fullscreen" title="Fullscreen">⛶</button>
+        <button class="reader-more-button" id="readerMoreButton" type="button" aria-label="More reading options" title="More options">•••</button>
       </div>
     </header>
 
@@ -66,8 +69,14 @@
           </div>
         </div>
         <div class="gesture-guide" id="gestureGuide" role="status">
-          <span class="gesture-mobile">Pinch to zoom · Swipe sideways when the page is fitted</span>
+          <span class="gesture-mobile">Pinch to zoom · Drag to explore · Swipe again at the edge to turn</span>
           <span class="gesture-desktop">Use the left and right arrow keys to turn pages</span>
+        </div>
+        <div class="edge-turn-hint" id="edgeTurnHint" role="status" aria-live="polite"></div>
+        <div class="move-view-bar hidden" id="moveViewBar" aria-label="Move around the zoomed page">
+          <button id="panLeftButton" type="button" aria-label="Move view left">◀</button>
+          <span><b aria-hidden="true">✥</b> Drag page</span>
+          <button id="panRightButton" type="button" aria-label="Move view right">▶</button>
         </div>
         <div class="reading-progress" aria-label="Reading progress">
           <span><i id="readingProgressBar"></i></span>
@@ -115,6 +124,17 @@
         <small id="pageJumpHelp">Enter an available page number.</small>
         <button class="button button-primary" type="submit">Open page</button>
       </form>
+    </dialog>
+
+    <dialog class="app-dialog reader-dialog reader-options-dialog" id="readerOptionsDialog">
+      <button class="dialog-close" data-close-dialog type="button" aria-label="Close">×</button>
+      <span class="eyebrow">Reading tools</span><h2>Reader options</h2>
+      <div class="reader-options-list">
+        <button id="optionsBookmarkButton" type="button"><span>☆</span><b>Bookmark this page</b><small>Save your current place</small></button>
+        <button id="optionsSavedButton" type="button"><span>★</span><b>Saved pages</b><small>Open your bookmarks</small></button>
+        <button id="optionsResetZoomButton" type="button"><span>100</span><b>Reset zoom</b><small>Fit the complete page</small></button>
+        <button id="optionsFullscreenButton" type="button"><span>⛶</span><b>Fullscreen</b><small>Maximise the reading area</small></button>
+      </div>
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
