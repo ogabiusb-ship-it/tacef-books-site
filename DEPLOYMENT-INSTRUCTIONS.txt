@@ -16,7 +16,8 @@ pinch/button zooming, edge-aware phone navigation, keyboard navigation, week
 navigation and animated page turns. At 100% a deliberate sideways swipe turns
 the page. When zoomed, one-finger movement pans across the page; after the
 reader reaches an edge, a further deliberate swipe turns the page. On desktop,
-the arrow keys always turn pages and right-click dragging moves a zoomed page.
+the arrow keys move the view left, right, up or down, while left-click dragging
+moves a zoomed page. Page Up/Page Down and the visible page buttons turn pages.
 
 Zoom is remembered per manual and applies to every page in that manual. Each
 page independently remembers its reading position, drawings and highlights.

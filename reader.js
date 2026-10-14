@@ -912,11 +912,28 @@ document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addE
 window.addEventListener("keydown", (event) => {
   scheduleChromeHide();
   if (event.target.matches("input, textarea, select, [contenteditable]") || document.querySelector("dialog[open]")) return;
-  if (event.key === "ArrowLeft" || event.key === "ArrowUp" || event.key === "PageUp") {
+  const arrowMovement = Math.max(120, Math.min(260, Math.round((event.shiftKey ? 0.65 : 0.28) * Math.min(stage.clientWidth, stage.clientHeight))));
+  if (event.key === "ArrowLeft") {
+    event.preventDefault();
+    stage.scrollBy({ left: -arrowMovement, behavior: "smooth" });
+  }
+  if (event.key === "ArrowRight") {
+    event.preventDefault();
+    stage.scrollBy({ left: arrowMovement, behavior: "smooth" });
+  }
+  if (event.key === "ArrowUp") {
+    event.preventDefault();
+    stage.scrollBy({ top: -arrowMovement, behavior: "smooth" });
+  }
+  if (event.key === "ArrowDown") {
+    event.preventDefault();
+    stage.scrollBy({ top: arrowMovement, behavior: "smooth" });
+  }
+  if (event.key === "PageUp") {
     event.preventDefault();
     openPage(page - 1);
   }
-  if (event.key === "ArrowRight" || event.key === "ArrowDown" || event.key === "PageDown") {
+  if (event.key === "PageDown") {
     event.preventDefault();
     openPage(page + 1);
   }
@@ -925,7 +942,7 @@ window.addEventListener("pointermove", (event) => {
   if (event.pointerType === "mouse" && event.clientY <= 96) showReaderChrome();
 });
 stage.addEventListener("pointerdown", (event) => {
-  if (event.pointerType !== "mouse" || event.button !== 2 || readingZoom <= 1.001 || annotationEnabled || event.target.closest?.("button, a, input, dialog, .annotation-toolbar")) return;
+  if (event.pointerType !== "mouse" || event.button !== 0 || readingZoom <= 1.001 || annotationEnabled || event.target.closest?.("button, a, input, dialog, .annotation-toolbar")) return;
   mousePan = { id: event.pointerId, x: event.clientX, y: event.clientY, scrollLeft: stage.scrollLeft, scrollTop: stage.scrollTop };
   stage.setPointerCapture(event.pointerId);
   stage.classList.add("dragging-page");
@@ -947,10 +964,6 @@ function finishMousePan(event) {
 }
 stage.addEventListener("pointerup", finishMousePan);
 stage.addEventListener("pointercancel", finishMousePan);
-stage.addEventListener("contextmenu", (event) => {
-  if (readingZoom <= 1.001 || annotationEnabled || event.target.closest?.("button, a, input, dialog, .annotation-toolbar")) return;
-  event.preventDefault();
-});
 stage.addEventListener("wheel", (event) => {
   if (!(event.ctrlKey || event.metaKey) || annotationEnabled) return;
   event.preventDefault();
