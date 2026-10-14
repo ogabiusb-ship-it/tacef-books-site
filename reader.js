@@ -26,6 +26,7 @@ const annotationCanvas = document.getElementById("annotationCanvas");
 const annotationContext = annotationCanvas.getContext("2d");
 const annotationToolbar = document.getElementById("annotationToolbar");
 const annotateButton = document.getElementById("annotateButton");
+const bookFrame = document.getElementById("bookFrame");
 const bookLeaf = document.getElementById("bookLeaf");
 const gestureGuide = document.getElementById("gestureGuide");
 const edgeTurnHint = document.getElementById("edgeTurnHint");
@@ -47,7 +48,7 @@ let chromeTimer = null;
 let lastStagePointer = null;
 let restoreViewAfterRender = null;
 let annotationTool = "pen";
-let highlightColour = localStorage.getItem(highlightColourKey) || "#f2c84b";
+let highlightColour = readStoredValue(highlightColourKey, "#f2c84b");
 let annotationEnabled = false;
 let drawingPointerId = null;
 let activeStroke = null;
@@ -61,29 +62,62 @@ let lastTrackedScrollLeft = 0;
 readingZoom = zoomLevels.reduce((closest, value) => Math.abs(value - readingZoom) < Math.abs(closest - readingZoom) ? value : closest, 1);
 
 function getManualZoom() {
-  try {
-    const manualZooms = JSON.parse(localStorage.getItem(manualZoomKey) || "{}");
-    return Number(manualZooms[book.id]) || Number(localStorage.getItem(zoomKey)) || 1;
-  } catch (_) {
-    return Number(localStorage.getItem(zoomKey)) || 1;
-  }
+  const manualZooms = readStoredObject(manualZoomKey);
+  return Number(manualZooms[book.id]) || Number(readStoredValue(zoomKey, "1")) || 1;
 }
 
 function saveManualZoom() {
   const manualZooms = readStoredObject(manualZoomKey);
   manualZooms[book.id] = readingZoom;
-  writeStoredObject(manualZoomKey, manualZooms);
-  localStorage.setItem(zoomKey, String(readingZoom));
+  if (writeStoredObject(manualZoomKey, manualZooms)) writeStoredValue(zoomKey, String(readingZoom));
+}
+
+function readStoredValue(key, fallback = null) {
+  try {
+    const value = localStorage.getItem(key);
+    return value === null ? fallback : value;
+  } catch (_) {
+    return fallback;
+  }
+}
+
+function writeStoredValue(key, value) {
+  try {
+    localStorage.setItem(key, String(value));
+    return true;
+  } catch (_) {
+    showToast("This device could not save the latest change.");
+    return false;
+  }
 }
 
 function readStoredObject(key) {
-  try { return JSON.parse(localStorage.getItem(key) || "{}"); }
+  try {
+    const value = JSON.parse(readStoredValue(key, "{}"));
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  }
   catch (_) { return {}; }
 }
 
 function writeStoredObject(key, value) {
-  try { localStorage.setItem(key, JSON.stringify(value)); return true; }
-  catch (_) { showToast("This device could not save the latest change."); return false; }
+  return writeStoredValue(key, JSON.stringify(value));
+}
+
+async function registerAppServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  const controlledAtLoad = Boolean(navigator.serviceWorker.controller);
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!controlledAtLoad || refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+  try {
+    const registration = await navigator.serviceWorker.register("./service-worker.js");
+    registration.update().catch(() => {});
+  } catch (_) {
+    /* The reader remains usable online if service-worker registration fails. */
+  }
 }
 
 function getPageViewState(targetPage = page) {
@@ -93,7 +127,8 @@ function getPageViewState(targetPage = page) {
 function saveCurrentViewState() {
   if (!pdfDocument || !canvas.offsetWidth) return;
   const all = readStoredObject(viewStateKey);
-  const bookViews = all[book.id] || {};
+  const storedBookViews = all[book.id];
+  const bookViews = storedBookViews && typeof storedBookViews === "object" && !Array.isArray(storedBookViews) ? storedBookViews : {};
   const maxX = Math.max(0, stage.scrollWidth - stage.clientWidth);
   const maxY = Math.max(0, stage.scrollHeight - stage.clientHeight);
   bookViews[page] = {
@@ -145,12 +180,14 @@ function restoreSavedView(state) {
 }
 
 function getAnnotations(targetPage = page) {
-  return readStoredObject(annotationsKey)[book.id]?.[targetPage] || [];
+  const strokes = readStoredObject(annotationsKey)[book.id]?.[targetPage];
+  return Array.isArray(strokes) ? strokes : [];
 }
 
 function saveAnnotations() {
   const all = readStoredObject(annotationsKey);
-  const bookAnnotations = all[book.id] || {};
+  const storedBookAnnotations = all[book.id];
+  const bookAnnotations = storedBookAnnotations && typeof storedBookAnnotations === "object" && !Array.isArray(storedBookAnnotations) ? storedBookAnnotations : {};
   if (pageStrokes.length) bookAnnotations[page] = pageStrokes;
   else delete bookAnnotations[page];
   all[book.id] = bookAnnotations;
@@ -161,7 +198,7 @@ function saveAnnotations() {
 }
 
 function getSavedPage() {
-  const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
+  const progress = readStoredObject(progressKey);
   return progress[book.id]?.page || 1;
 }
 
@@ -189,9 +226,9 @@ function showReaderError(error) {
 }
 
 function saveProgress() {
-  const progress = JSON.parse(localStorage.getItem(progressKey) || "{}");
+  const progress = readStoredObject(progressKey);
   progress[book.id] = { page, updated: Date.now() };
-  localStorage.setItem(progressKey, JSON.stringify(progress));
+  writeStoredObject(progressKey, progress);
 }
 
 function weekIndexForPage(value = page) {
@@ -326,7 +363,7 @@ function selectAnnotationTool(tool) {
 
 function selectHighlightColour(colour) {
   highlightColour = colour;
-  localStorage.setItem(highlightColourKey, colour);
+  writeStoredValue(highlightColourKey, colour);
   document.querySelectorAll("[data-highlight-colour]").forEach((button) => {
     const selected = button.dataset.highlightColour.toLowerCase() === colour.toLowerCase();
     button.classList.toggle("active", selected);
@@ -796,14 +833,17 @@ stage.addEventListener("touchcancel", () => {
 }, { passive: true });
 
 function getBookmarks() {
-  const all = JSON.parse(localStorage.getItem(bookmarksKey) || "{}");
-  return all[book.id] || [];
+  const all = readStoredObject(bookmarksKey);
+  const pages = all[book.id];
+  return Array.isArray(pages)
+    ? pages.map(Number).filter((value) => Number.isInteger(value) && value >= 1 && value <= totalPages)
+    : [];
 }
 
 function setBookmarks(pages) {
-  const all = JSON.parse(localStorage.getItem(bookmarksKey) || "{}");
+  const all = readStoredObject(bookmarksKey);
   all[book.id] = [...new Set(pages)].sort((a, b) => a - b);
-  localStorage.setItem(bookmarksKey, JSON.stringify(all));
+  writeStoredObject(bookmarksKey, all);
 }
 
 function updateBookmarkButton() {
@@ -911,31 +951,27 @@ document.getElementById("retryReader").addEventListener("click", loadDocument);
 document.querySelectorAll("[data-close-dialog]").forEach((button) => button.addEventListener("click", () => { button.closest("dialog").close(); showReaderChrome(); }));
 window.addEventListener("keydown", (event) => {
   scheduleChromeHide();
-  if (event.target.matches("input, textarea, select, [contenteditable]") || document.querySelector("dialog[open]")) return;
+  if (event.target.closest?.("input, textarea, select, [contenteditable]") || document.querySelector("dialog[open]")) return;
   const arrowMovement = Math.max(120, Math.min(260, Math.round((event.shiftKey ? 0.65 : 0.28) * Math.min(stage.clientWidth, stage.clientHeight))));
   if (event.key === "ArrowLeft") {
     event.preventDefault();
-    stage.scrollBy({ left: -arrowMovement, behavior: "smooth" });
+    openPage(page - 1, true);
+    return;
   }
   if (event.key === "ArrowRight") {
     event.preventDefault();
-    stage.scrollBy({ left: arrowMovement, behavior: "smooth" });
+    openPage(page + 1, true);
+    return;
   }
   if (event.key === "ArrowUp") {
     event.preventDefault();
     stage.scrollBy({ top: -arrowMovement, behavior: "smooth" });
+    return;
   }
   if (event.key === "ArrowDown") {
     event.preventDefault();
     stage.scrollBy({ top: arrowMovement, behavior: "smooth" });
-  }
-  if (event.key === "PageUp") {
-    event.preventDefault();
-    openPage(page - 1);
-  }
-  if (event.key === "PageDown") {
-    event.preventDefault();
-    openPage(page + 1);
+    return;
   }
 });
 window.addEventListener("pointermove", (event) => {
@@ -978,7 +1014,7 @@ stage.addEventListener("scroll", () => {
   viewSaveTimer = window.setTimeout(saveCurrentViewState, 180);
   const horizontalMovement = Math.abs(stage.scrollLeft - lastTrackedScrollLeft);
   lastTrackedScrollLeft = stage.scrollLeft;
-  if (horizontalMovement > 2 && readingZoom > 1.001 && !annotationEnabled && !multiTouchGesture) {
+  if (isPhoneLayout() && horizontalMovement > 2 && readingZoom > 1.001 && !annotationEnabled && !multiTouchGesture) {
     if (atHorizontalBoundary("next")) showEdgeTurnHint("next");
     else if (atHorizontalBoundary("previous")) showEdgeTurnHint("previous");
     else clearEdgeTurnHint();
@@ -1009,7 +1045,7 @@ window.addEventListener("pagehide", () => {
   if (activeStroke) saveAnnotations();
 });
 
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+registerAppServiceWorker();
 applyPageZoom(page);
 selectHighlightColour(highlightColour);
 selectAnnotationTool("pen");

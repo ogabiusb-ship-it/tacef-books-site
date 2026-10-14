@@ -5,26 +5,33 @@ WHAT THIS UPDATED PACKAGE CONTAINS
 ----------------------------------
 This is the complete ready-to-host TACEF Books website. It contains the
 English Manual, Yoruba Manual, Seed of Purpose Manual, automatic current-week
-opening, PWA installation, bookmarks, manual search and local reading progress.
+opening, PWA installation, bookmarks and local reading progress.
+The official programme name remains "52-week journey". The supplied manuals
+contain 51 verified scheduled study weeks, so the app does not invent or open
+an empty Week 52 lesson.
 The app is configured for the Firebase project "tacef-books-manual".
+Installed copies check for a new service worker whenever the app opens and
+refresh once after an update takes control. Saved manuals, progress, bookmarks,
+zoom positions, drawings and highlights remain on the device across updates.
 
 The animated welcome book asks for the reader's name, remembers it only on that
 device and then presents all three manuals. Every manual opens at its verified
-page for the current week, while the home page previews the following week's
-lesson. The Living Book reader includes sharp adaptive PDF rendering,
+page for the current week, while the home page presents the current lesson.
+The Living Book reader includes sharp adaptive PDF rendering,
 pinch/button zooming, edge-aware phone navigation, keyboard navigation, week
 navigation and animated page turns. At 100% a deliberate sideways swipe turns
 the page. When zoomed, one-finger movement pans across the page; after the
 reader reaches an edge, a further deliberate swipe turns the page. On desktop,
-the arrow keys move the view left, right, up or down, while left-click dragging
-moves a zoomed page. Page Up/Page Down and the visible page buttons turn pages.
+the left and right arrow keys turn pages, while the up and down arrow keys move
+vertically through the current page. Left-click dragging moves a zoomed page in
+any direction, and the visible page buttons also turn pages.
 
 Zoom is remembered per manual and applies to every page in that manual. Each
 page independently remembers its reading position, drawings and highlights.
 The reader includes pen, eraser and selectable gold, pink, green and blue
 highlighting tools. A compact two-level phone header keeps the manual identity,
-week, high-contrast
-page number, annotation and zoom controls visible without crowding; bookmarks,
+week, high-contrast page number, annotation and zoom controls visible without
+crowding; bookmarks,
 fullscreen and other secondary actions remain available in Reader options.
 The header uses African Church navy, TACEF red, ivory and restrained crest gold.
 The spiritual sky theme changes automatically using the reader's local time:
@@ -73,8 +80,8 @@ iPhone or iPad:
 USE WITHOUT INTERNET
 --------------------
 Open the installed app while online and choose Save offline on each manual
-you want to retain. The app, manual search, bookmarks and selected manuals will
-then remain available on that device without internet access.
+you want to retain. The app, bookmarks and selected manuals will then remain
+available on that device without internet access.
 
 IMPORTANT
 ---------

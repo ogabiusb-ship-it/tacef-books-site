@@ -15,13 +15,58 @@
   const homePages = [...homeBook.querySelectorAll(":scope > .home-book-page")];
   const installButtons = [document.getElementById("installButton")].filter(Boolean);
   const manualCacheName = "tacef-manuals-v1";
+  const journeyWeeks = 52;
   let deferredInstallPrompt = null;
   let homePageIndex = 0;
 
   const isStandalone = () => window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (/Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
   const studyForBook = (book) => schedule?.getCurrentStudy(today, book.id) || { ...currentStudy, page: 1 };
   const bookHref = (book) => `./reader.html?book=${encodeURIComponent(book.id)}&page=${studyForBook(book).page}`;
+
+  function readStoredValue(key, fallback = null) {
+    try {
+      const value = localStorage.getItem(key);
+      return value === null ? fallback : value;
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  function writeStoredValue(key, value) {
+    try {
+      localStorage.setItem(key, String(value));
+      return true;
+    } catch (_) {
+      showToast("This device could not save the latest change.");
+      return false;
+    }
+  }
+
+  function readStoredObject(key) {
+    try {
+      const value = JSON.parse(readStoredValue(key, "{}"));
+      return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+    }
+    catch (_) { return {}; }
+  }
+
+  async function registerAppServiceWorker() {
+    if (!("serviceWorker" in navigator)) return;
+    const controlledAtLoad = Boolean(navigator.serviceWorker.controller);
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (!controlledAtLoad || refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+    try {
+      const registration = await navigator.serviceWorker.register("./service-worker.js");
+      registration.update().catch(() => {});
+    } catch (_) {
+      /* The website remains usable online if service-worker registration fails. */
+    }
+  }
 
   function renderCurrentStudy() {
     document.getElementById("currentStudyWeek").textContent = `This week · Week ${currentStudy.week}`;
@@ -30,10 +75,10 @@
     document.getElementById("currentStudyNumber").textContent = String(currentStudy.week).padStart(2, "0");
     const progressRing = document.getElementById("currentStudyProgress");
     if (progressRing) {
-      const week = Math.max(1, Math.min(52, Number(currentStudy.week) || 1));
-      progressRing.style.strokeDasharray = "0 52";
+      const week = Math.max(1, Math.min(journeyWeeks, Number(currentStudy.week) || 1));
+      progressRing.style.strokeDasharray = `0 ${journeyWeeks}`;
       window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
-        progressRing.style.strokeDasharray = `${week} ${52 - week}`;
+        progressRing.style.strokeDasharray = `${week} ${journeyWeeks - week}`;
       }));
     }
     document.getElementById("currentStudyLink").href = `./reader.html?book=english&page=${currentStudy.page}`;
@@ -66,7 +111,7 @@
 
   function showNameStep() {
     nameStep.hidden = false;
-    const savedName = localStorage.getItem(readerNameKey) || "";
+    const savedName = readStoredValue(readerNameKey, "");
     document.getElementById("readerName").value = savedName;
     window.setTimeout(() => document.getElementById("readerName").focus(), 420);
   }
@@ -79,7 +124,7 @@
   }
 
   function closeWelcome({ arriveHome = false } = {}) {
-    localStorage.setItem(welcomeSeenKey, "1");
+    writeStoredValue(welcomeSeenKey, "1");
     welcomeOverlay.classList.remove("visible");
     document.body.classList.remove("welcome-open");
     window.setTimeout(() => {
@@ -244,15 +289,18 @@
   }
 
   function renderContinueReading() {
-    const progress = JSON.parse(localStorage.getItem("tacef-progress") || "{}");
-    const recent = Object.entries(progress).sort((a, b) => (b[1].updated || 0) - (a[1].updated || 0))[0];
+    const progress = readStoredObject("tacef-progress");
+    const recent = Object.entries(progress)
+      .filter(([, state]) => state && typeof state === "object")
+      .sort((a, b) => (Number(b[1].updated) || 0) - (Number(a[1].updated) || 0))[0];
     const panel = document.getElementById("continuePanel");
     if (!recent) { panel.classList.add("hidden"); return; }
     const book = books.find((item) => item.id === recent[0]);
     if (!book) { panel.classList.add("hidden"); return; }
+    const savedPage = Math.max(1, Math.min(book.pages, Number(recent[1].page) || 1));
     document.getElementById("continueTitle").textContent = book.shortTitle;
-    document.getElementById("continueMeta").textContent = `Continue from page ${recent[1].page || 1} of ${book.pages}`;
-    document.getElementById("continueLink").href = `./reader.html?book=${encodeURIComponent(book.id)}&page=${recent[1].page || 1}`;
+    document.getElementById("continueMeta").textContent = `Continue from page ${savedPage} of ${book.pages}`;
+    document.getElementById("continueLink").href = `./reader.html?book=${encodeURIComponent(book.id)}&page=${savedPage}`;
     panel.classList.remove("hidden");
   }
 
@@ -298,13 +346,13 @@
     event.preventDefault();
     const name = cleanReaderName(document.getElementById("readerName").value);
     if (!name) return;
-    localStorage.setItem(readerNameKey, name);
-    localStorage.setItem(welcomeSeenKey, "1");
+    writeStoredValue(readerNameKey, name);
+    writeStoredValue(welcomeSeenKey, "1");
     updateReaderIdentity(name);
     closeWelcome({ arriveHome: true });
   });
   document.getElementById("continueAsGuest").addEventListener("click", () => {
-    localStorage.setItem(welcomeSeenKey, "1");
+    writeStoredValue(welcomeSeenKey, "1");
     updateReaderIdentity("Reader");
     closeWelcome({ arriveHome: true });
   });
@@ -313,8 +361,8 @@
   welcomeOverlay.addEventListener("click", (event) => { if (event.target === welcomeOverlay) closeWelcome(); });
   window.addEventListener("keydown", (event) => { if (event.key === "Escape" && !welcomeOverlay.hidden) closeWelcome(); });
 
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("./service-worker.js").catch(() => {});
-  updateReaderIdentity(localStorage.getItem(readerNameKey));
+  registerAppServiceWorker();
+  updateReaderIdentity(readStoredValue(readerNameKey, ""));
   document.getElementById("footerYear").textContent = new Date().getFullYear();
   renderCurrentStudy();
   updateNetworkStatus();
@@ -326,6 +374,6 @@
   window.addEventListener("hashchange", () => {
     if (window.location.hash === "#library") goHomePage(1, false);
   });
-  const returningReader = Boolean(cleanReaderName(localStorage.getItem(readerNameKey))) || localStorage.getItem(welcomeSeenKey) === "1";
+  const returningReader = Boolean(cleanReaderName(readStoredValue(readerNameKey, ""))) || readStoredValue(welcomeSeenKey) === "1";
   if (!returningReader) window.setTimeout(openWelcome, 260);
 })();

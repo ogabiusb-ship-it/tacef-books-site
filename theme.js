@@ -6,8 +6,15 @@
   }
 
   function preferredMode() {
-    const saved = localStorage.getItem(preferenceKey);
+    let saved = null;
+    try { saved = localStorage.getItem(preferenceKey); }
+    catch (_) { /* Use the automatic theme when storage is unavailable. */ }
     return saved === "light" || saved === "night" ? saved : "auto";
+  }
+
+  function saveMode(mode) {
+    try { localStorage.setItem(preferenceKey, mode); }
+    catch (_) { /* The selected theme still applies for this session. */ }
   }
 
   function updateToggle(theme) {
@@ -48,7 +55,7 @@
     const button = event.target.closest("[data-theme-toggle]");
     if (!button) return;
     const nextMode = document.body.dataset.timeTheme === "night" ? "light" : "night";
-    localStorage.setItem(preferenceKey, nextMode);
+    saveMode(nextMode);
     applyTimeTheme();
   });
   window.setInterval(applyTimeTheme, 60000);

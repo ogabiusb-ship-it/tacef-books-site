@@ -1,4 +1,4 @@
-const VERSION = "39";
+const VERSION = "41";
 const APP_CACHE = `tacef-app-v${VERSION}`;
 const MANUAL_CACHE = "tacef-manuals-v1";
 const APP_SHELL = [
@@ -9,7 +9,8 @@ const APP_SHELL = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(APP_CACHE).then((cache) => cache.addAll(APP_SHELL.map((path) => new URL(path, self.location).href))).then(() => self.skipWaiting()));
+  const freshShellRequests = APP_SHELL.map((path) => new Request(new URL(path, self.location).href, { cache: "reload" }));
+  event.waitUntil(caches.open(APP_CACHE).then((cache) => cache.addAll(freshShellRequests)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (event) => {

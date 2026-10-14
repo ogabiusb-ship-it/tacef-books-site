@@ -30,7 +30,7 @@
         <button id="pagePositionButton" type="button" aria-label="Go to page"><b id="currentPageNumber">1</b><span>/</span><b id="pageTotalNumber">—</b></button>
         <button id="bookmarkButton" type="button" aria-label="Bookmark this page" title="Bookmark this page">☆</button>
         <button id="bookmarksButton" type="button">Saved</button>
-        <button id="annotateButton" class="annotate-button" type="button" aria-label="Draw or highlight this page" title="Draw or highlight">✎</button>
+        <button id="annotateButton" class="annotate-button" type="button" aria-label="Draw or highlight this page" aria-pressed="false" title="Draw or highlight">✎</button>
         <div class="zoom-controls" role="group" aria-label="Page zoom">
           <button id="zoomOutButton" type="button" aria-label="Decrease text size">A−</button>
           <button id="zoomResetButton" type="button" aria-label="Reset text size">100%</button>
@@ -70,7 +70,7 @@
         </div>
         <div class="gesture-guide" id="gestureGuide" role="status">
           <span class="gesture-mobile">Pinch to zoom · Drag to explore · Swipe again at the edge to turn</span>
-          <span class="gesture-desktop">Arrow keys move the view · Left-click and drag when zoomed</span>
+          <span class="gesture-desktop">← → turn pages · ↑ ↓ move the view · Left-click and drag when zoomed</span>
         </div>
         <div class="edge-turn-hint" id="edgeTurnHint" role="status" aria-live="polite"></div>
         <div class="reading-progress" aria-label="Reading progress">
