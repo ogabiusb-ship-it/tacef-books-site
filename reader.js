@@ -955,51 +955,80 @@ window.addEventListener("keydown", (event) => {
   const arrowMovement = Math.max(120, Math.min(260, Math.round((event.shiftKey ? 0.65 : 0.28) * Math.min(stage.clientWidth, stage.clientHeight))));
   if (event.key === "ArrowLeft") {
     event.preventDefault();
-    openPage(page - 1, true);
+    stage.scrollBy({ left: -arrowMovement, behavior: "auto" });
     return;
   }
   if (event.key === "ArrowRight") {
     event.preventDefault();
-    openPage(page + 1, true);
+    stage.scrollBy({ left: arrowMovement, behavior: "auto" });
     return;
   }
   if (event.key === "ArrowUp") {
     event.preventDefault();
-    stage.scrollBy({ top: -arrowMovement, behavior: "smooth" });
+    stage.scrollBy({ top: -arrowMovement, behavior: "auto" });
     return;
   }
   if (event.key === "ArrowDown") {
     event.preventDefault();
-    stage.scrollBy({ top: arrowMovement, behavior: "smooth" });
+    stage.scrollBy({ top: arrowMovement, behavior: "auto" });
+    return;
+  }
+  if (event.key === "PageUp" || event.key === "PageDown") {
+    event.preventDefault();
+    stage.scrollBy({ top: (event.key === "PageUp" ? -1 : 1) * Math.max(240, stage.clientHeight * .78), behavior: "auto" });
     return;
   }
 });
 window.addEventListener("pointermove", (event) => {
   if (event.pointerType === "mouse" && event.clientY <= 96) showReaderChrome();
 });
-stage.addEventListener("pointerdown", (event) => {
-  if (event.pointerType !== "mouse" || event.button !== 0 || readingZoom <= 1.001 || annotationEnabled || event.target.closest?.("button, a, input, dialog, .annotation-toolbar")) return;
-  mousePan = { id: event.pointerId, x: event.clientX, y: event.clientY, scrollLeft: stage.scrollLeft, scrollTop: stage.scrollTop };
-  stage.setPointerCapture(event.pointerId);
-  stage.classList.add("dragging-page");
-  event.preventDefault();
-});
 stage.addEventListener("pointermove", (event) => {
-  if (event.pointerType === "mouse" || event.pointerType === "pen") lastStagePointer = { x: event.clientX, y: event.clientY };
-  if (!mousePan || mousePan.id !== event.pointerId) return;
-  stage.scrollLeft = mousePan.scrollLeft - (event.clientX - mousePan.x);
-  stage.scrollTop = mousePan.scrollTop - (event.clientY - mousePan.y);
-  event.preventDefault();
+  if (event.pointerType === "mouse" || event.pointerType === "pen" || !event.pointerType) lastStagePointer = { x: event.clientX, y: event.clientY };
 });
-function finishMousePan(event) {
-  if (!mousePan || mousePan.id !== event.pointerId) return;
-  if (stage.hasPointerCapture(event.pointerId)) stage.releasePointerCapture(event.pointerId);
+
+function finishMousePan() {
+  if (!mousePan) return;
   mousePan = null;
   stage.classList.remove("dragging-page");
   saveCurrentViewState();
 }
-stage.addEventListener("pointerup", finishMousePan);
-stage.addEventListener("pointercancel", finishMousePan);
+
+stage.addEventListener("mousedown", (event) => {
+  const interactive = event.target.closest?.("button, a, input, dialog, .annotation-toolbar");
+  const canPan = stage.scrollWidth > stage.clientWidth + 1 || stage.scrollHeight > stage.clientHeight + 1;
+  if (event.button !== 0 || annotationEnabled || interactive || !canPan) return;
+  mousePan = {
+    x: event.clientX,
+    y: event.clientY,
+    scrollLeft: stage.scrollLeft,
+    scrollTop: stage.scrollTop
+  };
+  stage.classList.add("dragging-page");
+  dismissGestureGuide();
+  event.preventDefault();
+});
+
+window.addEventListener("mousemove", (event) => {
+  if (!mousePan) return;
+  if ((event.buttons & 1) !== 1) {
+    finishMousePan();
+    return;
+  }
+  const maxX = Math.max(0, stage.scrollWidth - stage.clientWidth);
+  const maxY = Math.max(0, stage.scrollHeight - stage.clientHeight);
+  const nextLeft = Math.max(0, Math.min(maxX, mousePan.scrollLeft - (event.clientX - mousePan.x)));
+  const nextTop = Math.max(0, Math.min(maxY, mousePan.scrollTop - (event.clientY - mousePan.y)));
+  stage.scrollLeft = nextLeft;
+  stage.scrollTop = nextTop;
+  lastStagePointer = { x: event.clientX, y: event.clientY };
+  event.preventDefault();
+}, { passive: false });
+
+window.addEventListener("mouseup", finishMousePan);
+window.addEventListener("blur", finishMousePan);
+stage.addEventListener("dragstart", (event) => {
+  if (mousePan) event.preventDefault();
+});
 stage.addEventListener("wheel", (event) => {
   if (!(event.ctrlKey || event.metaKey) || annotationEnabled) return;
   event.preventDefault();

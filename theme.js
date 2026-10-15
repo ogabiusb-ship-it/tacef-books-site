@@ -1,5 +1,28 @@
 (function () {
   const preferenceKey = "tacef-theme-preference";
+  const standaloneMode = window.matchMedia("(display-mode: standalone)");
+  let safeAreaFrame = 0;
+
+  function isStandalone() {
+    return standaloneMode.matches || window.navigator.standalone === true || Boolean(document.fullscreenElement);
+  }
+
+  function updateSystemSafeArea() {
+    window.cancelAnimationFrame(safeAreaFrame);
+    safeAreaFrame = window.requestAnimationFrame(() => {
+      const viewport = window.visualViewport;
+      const viewportWidth = viewport?.width || window.innerWidth;
+      const compactScreen = viewportWidth <= 820;
+      const reportedOffset = compactScreen ? Math.max(0, Math.min(48, Math.round(viewport?.offsetTop || 0))) : 0;
+      const installedFallback = compactScreen && isStandalone() && reportedOffset < 8
+        ? (viewportWidth <= 600 ? 28 : 24)
+        : 0;
+      const runtimeSafeTop = Math.max(reportedOffset, installedFallback);
+
+      document.documentElement.style.setProperty("--runtime-safe-top", `${runtimeSafeTop}px`);
+      document.documentElement.classList.toggle("system-ui-overlay", runtimeSafeTop > 0);
+    });
+  }
 
   function daylightTheme() {
     return new Date().getHours() < 12 ? "morning" : "afternoon";
@@ -38,19 +61,22 @@
     document.body.dataset.timeTheme = theme;
     document.body.dataset.themeMode = mode;
     document.documentElement.style.colorScheme = theme === "night" ? "dark" : "light";
-    const themeColors = { morning: "#fff8e7", afternoon: "#e7f1fa", night: "#070b35" };
+    const pageThemeColors = { morning: "#fff8e7", afternoon: "#e7f1fa", night: "#070b35" };
+    const systemThemeColors = { morning: "#07123f", afternoon: "#08164d", night: "#030723" };
     const captions = {
       morning: "Morning grace · Begin the day in God’s Word",
       afternoon: "Steady light · Grow through God’s Word",
       night: "Evening peace · Rest and reflect in God’s Word"
     };
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", themeColors[theme]);
+    const compactScreen = (window.visualViewport?.width || window.innerWidth) <= 820;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", (compactScreen ? systemThemeColors : pageThemeColors)[theme]);
     const caption = document.getElementById("spiritualCaption");
     if (caption) caption.textContent = captions[theme];
     updateToggle(theme);
   }
 
   applyTimeTheme();
+  updateSystemSafeArea();
   document.addEventListener("click", (event) => {
     const button = event.target.closest("[data-theme-toggle]");
     if (!button) return;
@@ -58,5 +84,12 @@
     saveMode(nextMode);
     applyTimeTheme();
   });
+  window.addEventListener("resize", () => { updateSystemSafeArea(); applyTimeTheme(); }, { passive: true });
+  window.addEventListener("orientationchange", updateSystemSafeArea, { passive: true });
+  document.addEventListener("fullscreenchange", updateSystemSafeArea);
+  window.visualViewport?.addEventListener("resize", updateSystemSafeArea, { passive: true });
+  window.visualViewport?.addEventListener("scroll", updateSystemSafeArea, { passive: true });
+  if (typeof standaloneMode.addEventListener === "function") standaloneMode.addEventListener("change", updateSystemSafeArea);
+  else if (typeof standaloneMode.addListener === "function") standaloneMode.addListener(updateSystemSafeArea);
   window.setInterval(applyTimeTheme, 60000);
 })();

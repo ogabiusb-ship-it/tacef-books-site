@@ -2937,8 +2937,30 @@ body:not(.reader-body)[data-time-theme="night"] .book-actions .offline-save-butt
   .reader-header-controls #zoomResetButton { min-width: 47px; font-size: .6rem; }
 }
 
-/* Release 41 — official 52-week journey branding with 51 verified study weeks. */
+/* Release 42 — reliable two-axis desktop mouse panning for zoomed manual pages. */
 .move-view-bar { display: none !important; }
+
+.reader-is-zoomed .pdf-stage {
+  overflow-x: auto !important;
+  overscroll-behavior: contain;
+}
+.reader-is-zoomed .pdf-canvas-wrap {
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+  justify-content: flex-start;
+}
+.reader-is-zoomed .book-frame,
+.reader-is-zoomed .book-leaf {
+  width: max-content;
+  max-width: none !important;
+  flex: 0 0 auto;
+}
+.pdf-stage.dragging-page {
+  scroll-behavior: auto !important;
+  user-select: none;
+  will-change: scroll-position;
+}
 
 .highlight-colours {
   display: none;
@@ -3045,6 +3067,151 @@ body:not(.reader-body)[data-time-theme="night"] .book-actions .offline-save-butt
     min-height: 34px;
   }
   .reader-options-list > button { min-height: 68px; }
+}
+
+/* Release 43 — adaptive system-safe headers and clearer TACEF colour roles. */
+:root {
+  --runtime-safe-top: 0px;
+  --app-safe-top: max(env(safe-area-inset-top, 0px), var(--runtime-safe-top));
+  --tacef-royal: #17318f;
+  --tacef-red: #d7192d;
+  --tacef-gold: #d4af45;
+  --tacef-green: #13845c;
+}
+
+@media (max-width: 820px) {
+  html { scroll-padding-top: calc(76px + var(--app-safe-top)); }
+  #library { scroll-margin-top: calc(76px + var(--app-safe-top)); }
+
+  body:not(.reader-body) .site-header,
+  body:not(.reader-body)[data-time-theme="morning"] .site-header,
+  body:not(.reader-body)[data-time-theme="afternoon"] .site-header,
+  body:not(.reader-body)[data-time-theme="night"] .site-header {
+    min-height: calc(64px + var(--app-safe-top));
+    padding-top: calc(8px + var(--app-safe-top));
+    padding-right: max(10px, env(safe-area-inset-right, 0px));
+    padding-bottom: 8px;
+    padding-left: max(10px, env(safe-area-inset-left, 0px));
+    isolation: isolate;
+    color: #fffaf0;
+    background: linear-gradient(105deg, rgba(3, 7, 35, .985), rgba(8, 22, 78, .975) 68%, rgba(17, 34, 94, .97));
+    border-bottom-color: rgba(212, 175, 69, .3);
+    box-shadow: 0 12px 34px rgba(0, 0, 28, .3);
+  }
+  body:not(.reader-body) .site-header::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    inset: 0 0 auto;
+    height: calc(var(--app-safe-top) + 8px);
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(2, 5, 31, .98), rgba(6, 14, 57, .78));
+    border-bottom: 1px solid rgba(255, 255, 255, .045);
+    backdrop-filter: blur(16px) saturate(120%);
+  }
+  .site-header > .brand,
+  .site-header > .header-actions { position: relative; z-index: 1; }
+  .site-header .brand { min-width: 0; }
+  .site-header .brand-emblem {
+    border-color: rgba(212, 175, 69, .7);
+    box-shadow: 0 0 0 3px rgba(212, 175, 69, .1), 0 8px 20px rgba(0, 0, 25, .28);
+  }
+  .site-header .brand .brand-copy { min-width: 0; }
+  .site-header .brand .brand-copy strong,
+  body:not(.reader-body)[data-time-theme="morning"] .brand .brand-copy strong,
+  body:not(.reader-body)[data-time-theme="afternoon"] .brand .brand-copy strong {
+    overflow: hidden;
+    color: #fffaf0 !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .site-header .brand .brand-copy small,
+  body:not(.reader-body)[data-time-theme="morning"] .brand .brand-copy small,
+  body:not(.reader-body)[data-time-theme="afternoon"] .brand .brand-copy small { color: #c3ccec !important; }
+  .site-header .header-actions { flex: 0 0 auto; }
+
+  .site-header #installButton {
+    color: #fff;
+    background: linear-gradient(145deg, #eb2338, #b90f23);
+    border-color: rgba(255, 255, 255, .2);
+    box-shadow: 0 9px 22px rgba(215, 25, 45, .28), inset 0 1px rgba(255, 255, 255, .2);
+  }
+  .site-header #installButton:hover { background: linear-gradient(145deg, #f22a40, #c31126); }
+  .site-header .profile-chip,
+  body:not(.reader-body)[data-time-theme="morning"] .profile-chip,
+  body:not(.reader-body)[data-time-theme="afternoon"] .profile-chip {
+    color: #fffaf0;
+    background: linear-gradient(145deg, rgba(31, 61, 164, .94), rgba(17, 42, 127, .94));
+    border-color: rgba(125, 153, 255, .42);
+  }
+  .site-header .profile-chip > span:first-child {
+    color: #07123f;
+    background: linear-gradient(145deg, #f6e8b8, var(--tacef-gold));
+  }
+  .site-header .theme-toggle,
+  body:not(.reader-body)[data-time-theme="morning"] .theme-toggle,
+  body:not(.reader-body)[data-time-theme="afternoon"] .theme-toggle {
+    color: #f4dfa0;
+    background: rgba(255, 255, 255, .075);
+    border-color: rgba(212, 175, 69, .35);
+  }
+
+  .home-book { height: calc(100dvh - 64px - var(--app-safe-top)); }
+}
+
+@media (max-width: 700px) {
+  .reader-header {
+    height: calc(114px + var(--app-safe-top));
+    padding-top: calc(5px + var(--app-safe-top));
+    isolation: isolate;
+  }
+  .reader-header::before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    inset: 0 0 auto;
+    height: calc(var(--app-safe-top) + 5px);
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(2, 5, 31, .98), rgba(7, 18, 63, .86));
+    border-bottom: 1px solid rgba(212, 175, 69, .14);
+  }
+  .reader-header > * { position: relative; z-index: 1; }
+  .reader-header-controls #weekMenuButton {
+    color: #fff;
+    background: linear-gradient(145deg, #2444ae, #10266f);
+    border-color: rgba(116, 146, 255, .5);
+  }
+  .reader-header-controls #pagePositionButton {
+    background: linear-gradient(145deg, #fff8df, #dfbd5a);
+    border-color: rgba(132, 93, 8, .56);
+  }
+  .reader-header-controls #annotateButton {
+    color: #fff;
+    background: linear-gradient(145deg, #e51d34, #ad0d20);
+    border-color: rgba(255, 255, 255, .22);
+    box-shadow: 0 5px 14px rgba(215, 25, 45, .22);
+  }
+  .reader-header-controls #annotateButton.active,
+  .reader-header-controls #annotateButton[aria-pressed="true"] {
+    color: #07123f;
+    background: linear-gradient(145deg, #f8e9b8, var(--tacef-gold));
+    border-color: rgba(127, 91, 11, .5);
+  }
+  .reader-top-actions .reader-more-button {
+    color: #f8e9b8;
+    background: linear-gradient(145deg, #17318f, #0b1c62);
+    border-color: rgba(212, 175, 69, .38);
+  }
+
+  .pdf-stage,
+  .reader-body[data-time-theme="morning"] .pdf-stage,
+  .reader-body[data-time-theme="afternoon"] .pdf-stage,
+  .reader-body[data-time-theme="night"] .pdf-stage {
+    padding-top: calc(114px + var(--app-safe-top));
+  }
+  .reader-loading { inset: calc(114px + var(--app-safe-top)) 0 0; }
+  .annotation-toolbar { top: calc(122px + var(--app-safe-top)); }
+  .reader-chrome-hidden .pdf-stage { padding-top: 0; }
 }
 
 

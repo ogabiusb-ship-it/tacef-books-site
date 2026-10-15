@@ -22,9 +22,12 @@ pinch/button zooming, edge-aware phone navigation, keyboard navigation, week
 navigation and animated page turns. At 100% a deliberate sideways swipe turns
 the page. When zoomed, one-finger movement pans across the page; after the
 reader reaches an edge, a further deliberate swipe turns the page. On desktop,
-the left and right arrow keys turn pages, while the up and down arrow keys move
-vertically through the current page. Left-click dragging moves a zoomed page in
-any direction, and the visible page buttons also turn pages.
+all four arrow keys move the current view left, right, up or down; Page Up and
+Page Down move through the same page rather than changing manual pages.
+Left-click dragging moves any scrollable manual view in every direction,
+including horizontally across text beyond the left and right edges. Desktop
+dragging continues even if the pointer leaves the page area, and the visible
+page buttons still turn pages.
 
 Zoom is remembered per manual and applies to every page in that manual. Each
 page independently remembers its reading position, drawings and highlights.
@@ -34,6 +37,10 @@ week, high-contrast page number, annotation and zoom controls visible without
 crowding; bookmarks,
 fullscreen and other secondary actions remain available in Reader options.
 The header uses African Church navy, TACEF red, ivory and restrained crest gold.
+On phones and tablets it automatically reserves the real system-status safe
+area, adding a small fallback only in installed or fullscreen mode. This keeps
+the clock, camera cutout, signal and battery icons clear without wasting space
+in ordinary browser windows or devices that do not need the extra inset.
 The spiritual sky theme changes automatically using the reader's local time:
 sunrise and warm light from 5am, a calm blue daytime sky from noon, and a deep
 blue moonlit atmosphere from 6pm. Lightweight rays, clouds, stars and restrained
